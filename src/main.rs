@@ -5,6 +5,7 @@ use std::{
 };
 
 use clap::Parser;
+use locale_check::translation_file::TranslationFile;
 use walkdir::{DirEntry, WalkDir};
 
 /// Handle those damn translations...
@@ -13,7 +14,13 @@ use walkdir::{DirEntry, WalkDir};
 struct Args {
     /// Root directory to search from
     #[arg(short, long, default_value = ".")]
-    path: PathBuf,
+    root_dir: PathBuf,
+    /// Path to English translation file
+    #[arg(short, long)]
+    en_file: PathBuf,
+    /// Path to Swedish translation file
+    #[arg(short, long)]
+    sv_file: PathBuf,
 }
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
@@ -21,7 +28,10 @@ static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 fn main() {
     let args = Args::parse();
 
-    let walker = WalkDir::new(args.path)
+    let en_translation_file = TranslationFile::new(args.en_file);
+    let sv_translation_file = TranslationFile::new(args.sv_file);
+
+    let walker = WalkDir::new(args.root_dir)
         .into_iter()
         // Exclude node_modules
         .filter_entry(|e| !is_node_modules(e))
@@ -39,10 +49,24 @@ fn main() {
                     let key_usages = find_formatted_message_usages(reader);
                     for (line_number, id) in key_usages {
                         println!(
-                            "[{}] Found key: {} on line {}",
+                            "[{}] \"{}\" on line {}",
                             path.file_name().unwrap().to_str().unwrap(),
                             id,
                             line_number
+                        );
+                        println!(
+                            "  EN: {}",
+                            en_translation_file
+                                .entries
+                                .get(&id)
+                                .unwrap_or(&"".to_string())
+                        );
+                        println!(
+                            "  SV: {}",
+                            sv_translation_file
+                                .entries
+                                .get(&id)
+                                .unwrap_or(&"".to_string())
                         );
                     }
                 }
@@ -63,32 +87,22 @@ fn find_formatted_message_usages(file_reader: BufReader<File>) -> Vec<(usize, St
             (Ok(line), false) => {
                 if line.contains("<FormattedMessage") {
                     looking_for_id = true;
-                }
 
-                if line.contains("id=") {
-                    let key = line
-                        .split("id=")
-                        .nth(1)
-                        .unwrap()
-                        .split('"')
-                        .nth(1)
-                        .unwrap()
-                        .to_string();
-                    translation_key_usages.push((line_number, key));
-                    looking_for_id = false;
+                    if line.contains("id=") {
+                        let key = extract_id_from_line(&line);
+                        if let Some(key) = key {
+                            translation_key_usages.push((line_number, key));
+                        }
+                        looking_for_id = false;
+                    }
                 }
             }
             (Ok(line), true) => {
                 if line.contains("id=") {
-                    let key = line
-                        .split("id=")
-                        .nth(1)
-                        .unwrap()
-                        .split('"')
-                        .nth(1)
-                        .unwrap()
-                        .to_string();
-                    translation_key_usages.push((line_number, key));
+                    let key = extract_id_from_line(&line);
+                    if let Some(key) = key {
+                        translation_key_usages.push((line_number, key));
+                    }
                 }
                 looking_for_id = false;
             }
@@ -99,6 +113,23 @@ fn find_formatted_message_usages(file_reader: BufReader<File>) -> Vec<(usize, St
     }
 
     translation_key_usages
+}
+
+fn extract_id_from_line(line: &str) -> Option<String> {
+    let mut id = None;
+    if line.contains("id=") {
+        let first_split = line.split("id=\"").nth(1);
+        if let Some(first_split) = first_split {
+            let second_split = first_split.split('"').next();
+            if let Some(second_split) = second_split {
+                id = Some(second_split.to_string());
+            } else {
+                println!("Unable to split line: {}", line);
+            }
+        }
+    }
+
+    id
 }
 
 fn is_node_modules(entry: &DirEntry) -> bool {
