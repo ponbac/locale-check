@@ -26,4 +26,36 @@ impl TranslationFile {
             entries,
         }
     }
+
+    pub fn is_compatible_with(&self, other: &Self) -> Result<(), Vec<String>> {
+        let mut errors = Vec::new();
+
+        for (key, value) in &self.entries {
+            if !other.entries.contains_key(key) {
+                errors.push(format!(
+                    "Key \"{}\" is missing from {}",
+                    key,
+                    other._path.to_str().unwrap()
+                ));
+            } else if other.entries.get(key).unwrap().is_empty() {
+                errors.push(format!(
+                    "Key \"{}\" is empty in {}",
+                    key,
+                    other._path.to_str().unwrap()
+                ));
+            } else if value.is_empty() {
+                errors.push(format!(
+                    "Key \"{}\" is empty in {}",
+                    key,
+                    self._path.to_str().unwrap()
+                ));
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
 }

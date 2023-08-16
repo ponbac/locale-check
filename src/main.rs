@@ -30,6 +30,18 @@ fn main() {
 
     let en_translation_file = TranslationFile::new(args.en_file);
     let sv_translation_file = TranslationFile::new(args.sv_file);
+    if let Err(errors) = en_translation_file.is_compatible_with(&sv_translation_file) {
+        for error in errors {
+            println!("{}", error);
+        }
+        std::process::exit(1);
+    }
+    if let Err(errors) = sv_translation_file.is_compatible_with(&en_translation_file) {
+        for error in errors {
+            println!("{}", error);
+        }
+        std::process::exit(1);
+    }
 
     let walker = WalkDir::new(args.root_dir)
         .into_iter()
