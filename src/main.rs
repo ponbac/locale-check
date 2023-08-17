@@ -36,12 +36,6 @@ fn main() {
         }
         std::process::exit(1);
     }
-    if let Err(errors) = sv_translation_file.is_compatible_with(&en_translation_file) {
-        for error in errors {
-            println!("{}", error);
-        }
-        std::process::exit(1);
-    }
 
     let walker = WalkDir::new(args.root_dir)
         .into_iter()

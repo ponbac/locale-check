@@ -28,6 +28,17 @@ impl TranslationFile {
     }
 
     pub fn is_compatible_with(&self, other: &Self) -> Result<(), Vec<String>> {
+        let mut errors = self.compare_with(other);
+        errors.extend(other.compare_with(self));
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors)
+        }
+    }
+
+    fn compare_with(&self, other: &Self) -> Vec<String> {
         let mut errors = Vec::new();
 
         for (key, value) in &self.entries {
@@ -52,10 +63,6 @@ impl TranslationFile {
             }
         }
 
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+        errors
     }
 }
