@@ -24,15 +24,31 @@ static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 fn main() {
     let args = Args::parse();
 
+    // Try to open the translation files
     let en_translation_file = TranslationFile::new(args.en_file);
     let sv_translation_file = TranslationFile::new(args.sv_file);
-    if let Err(errors) = en_translation_file.is_compatible_with(&sv_translation_file) {
-        for error in errors {
-            println!("{}", error);
+    if let Err((en_errors, sv_errors)) =
+        en_translation_file.is_compatible_with(&sv_translation_file)
+    {
+        for error in en_errors {
+            println!(
+                "[{}]: {}",
+                en_translation_file.path.to_str().unwrap(),
+                error
+            );
         }
+        for error in sv_errors {
+            println!(
+                "[{}]: {}",
+                sv_translation_file.path.to_str().unwrap(),
+                error
+            );
+        }
+
         std::process::exit(1);
     }
 
+    // Test against all TS files in the root directory
     let walker = WalkDir::new(args.root_dir)
         .into_iter()
         // Exclude node_modules
