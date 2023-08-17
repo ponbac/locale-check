@@ -1,11 +1,7 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use clap::Parser;
-use locale_check::translation_file::TranslationFile;
+use locale_check::{translation_file::TranslationFile, ts_file::TSFile};
 use walkdir::{DirEntry, WalkDir};
 
 /// Handle those damn translations...
@@ -49,10 +45,9 @@ fn main() {
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
-                    let file = File::open(path).expect("Unable to open file");
-                    let reader = std::io::BufReader::new(file);
+                    let ts_file = TSFile::new(path);
 
-                    let key_usages = find_formatted_message_usages(reader);
+                    let key_usages = ts_file.find_formatted_message_usages();
                     for (line_number, id) in key_usages {
                         println!(
                             "[{}] \"{}\" on line {}",
@@ -79,63 +74,6 @@ fn main() {
             }
         }
     }
-}
-
-/// Find all usages of `<FormattedMessage />` in a file, and return
-/// the id (e.g. `id="CO2_title"`) of the translation key used as
-/// well as the line number.
-fn find_formatted_message_usages(file_reader: BufReader<File>) -> Vec<(usize, String)> {
-    let mut translation_key_usages: Vec<(usize, String)> = Vec::new();
-
-    let mut looking_for_id = false;
-    for (line_number, line) in file_reader.lines().enumerate() {
-        match (line, looking_for_id) {
-            (Ok(line), false) => {
-                if line.contains("<FormattedMessage") {
-                    looking_for_id = true;
-
-                    if line.contains("id=") {
-                        let key = extract_id_from_line(&line);
-                        if let Some(key) = key {
-                            translation_key_usages.push((line_number, key));
-                        }
-                        looking_for_id = false;
-                    }
-                }
-            }
-            (Ok(line), true) => {
-                if line.contains("id=") {
-                    let key = extract_id_from_line(&line);
-                    if let Some(key) = key {
-                        translation_key_usages.push((line_number, key));
-                    }
-                }
-                looking_for_id = false;
-            }
-            (Err(e), _) => {
-                println!("Error reading line: {}", e);
-            }
-        }
-    }
-
-    translation_key_usages
-}
-
-fn extract_id_from_line(line: &str) -> Option<String> {
-    let mut id = None;
-    if line.contains("id=") {
-        let first_split = line.split("id=\"").nth(1);
-        if let Some(first_split) = first_split {
-            let second_split = first_split.split('"').next();
-            if let Some(second_split) = second_split {
-                id = Some(second_split.to_string());
-            } else {
-                println!("Unable to split line: {}", line);
-            }
-        }
-    }
-
-    id
 }
 
 fn is_node_modules(entry: &DirEntry) -> bool {
