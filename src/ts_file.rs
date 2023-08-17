@@ -25,7 +25,7 @@ impl TSFile {
                         looking_for_id = true;
 
                         if line.contains("id=") {
-                            let key = extract_id_from_line(&line);
+                            let key = extract_id_equals_from_line(&line);
                             if let Some(key) = key {
                                 translation_key_usages.push((line_number, key));
                             }
@@ -35,7 +35,44 @@ impl TSFile {
                 }
                 (Ok(line), true) => {
                     if line.contains("id=") {
-                        let key = extract_id_from_line(&line);
+                        let key = extract_id_equals_from_line(&line);
+                        if let Some(key) = key {
+                            translation_key_usages.push((line_number, key));
+                        }
+                        looking_for_id = false;
+                    }
+                }
+                (Err(e), _) => {
+                    println!("Error reading line: {}", e);
+                }
+            }
+        }
+
+        translation_key_usages
+    }
+
+    pub fn find_format_message_usages(&self) -> Vec<(usize, String)> {
+        let mut translation_key_usages: Vec<(usize, String)> = Vec::new();
+
+        let mut looking_for_id = false;
+        for (line_number, line) in std::io::BufReader::new(&self.file).lines().enumerate() {
+            match (line, looking_for_id) {
+                (Ok(line), false) => {
+                    if line.contains("formatMessage({") {
+                        looking_for_id = true;
+
+                        if line.contains("id:") {
+                            let key = extract_id_colon_from_line(&line);
+                            if let Some(key) = key {
+                                translation_key_usages.push((line_number, key));
+                            }
+                            looking_for_id = false;
+                        }
+                    }
+                }
+                (Ok(line), true) => {
+                    if line.contains("id:") {
+                        let key = extract_id_colon_from_line(&line);
                         if let Some(key) = key {
                             translation_key_usages.push((line_number, key));
                         }
@@ -52,10 +89,27 @@ impl TSFile {
     }
 }
 
-fn extract_id_from_line(line: &str) -> Option<String> {
+fn extract_id_equals_from_line(line: &str) -> Option<String> {
     let mut id = None;
     if line.contains("id=") {
         let first_split = line.split("id=\"").nth(1);
+        if let Some(first_split) = first_split {
+            let second_split = first_split.split('"').next();
+            if let Some(second_split) = second_split {
+                id = Some(second_split.to_string());
+            } else {
+                println!("Unable to split line: {}", line);
+            }
+        }
+    }
+
+    id
+}
+
+fn extract_id_colon_from_line(line: &str) -> Option<String> {
+    let mut id = None;
+    if line.contains("id:") {
+        let first_split = line.split("id: \"").nth(1);
         if let Some(first_split) = first_split {
             let second_split = first_split.split('"').next();
             if let Some(second_split) = second_split {

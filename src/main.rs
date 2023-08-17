@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashSet, path::PathBuf};
 
 use clap::Parser;
 use locale_check::{translation_file::TranslationFile, ts_file::TSFile};
@@ -56,6 +56,7 @@ fn main() {
         // Filter out any non-accessible files
         .filter_map(|e| e.ok());
 
+    let mut used_keys = HashSet::new();
     for entry in walker {
         let path = entry.path();
         if path.is_file() {
@@ -63,32 +64,39 @@ fn main() {
                 if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
                     let ts_file = TSFile::new(path);
 
-                    let key_usages = ts_file.find_formatted_message_usages();
-                    for (line_number, id) in key_usages {
-                        println!(
-                            "[{}] \"{}\" on line {}",
-                            path.file_name().unwrap().to_str().unwrap(),
-                            id,
-                            line_number
-                        );
-                        println!(
-                            "  EN: {}",
-                            en_translation_file
-                                .entries
-                                .get(&id)
-                                .unwrap_or(&"".to_string())
-                        );
-                        println!(
-                            "  SV: {}",
-                            sv_translation_file
-                                .entries
-                                .get(&id)
-                                .unwrap_or(&"".to_string())
-                        );
-                    }
+                    let format_message_keys = ts_file
+                        .find_format_message_usages()
+                        .into_iter()
+                        .map(|(_, key)| key)
+                        .collect::<Vec<_>>();
+                    let formatted_message_keys = ts_file
+                        .find_formatted_message_usages()
+                        .into_iter()
+                        .map(|(_, key)| key)
+                        .collect::<Vec<_>>();
+
+                    // Insert all keys into the set
+                    used_keys.extend(format_message_keys);
+                    used_keys.extend(formatted_message_keys);
                 }
             }
         }
+    }
+
+    // Check that all keys are used
+    let mut unused_keys = Vec::new();
+    en_translation_file.entries.iter().for_each(|(key, _)| {
+        if !used_keys.contains(key) {
+            println!("key \"{}\" is never used!", key);
+            unused_keys.push(key.clone());
+        }
+    });
+
+    println!("{} unused keys", unused_keys.len());
+    println!("{} used keys", used_keys.len());
+
+    if !unused_keys.is_empty() {
+        std::process::exit(1);
     }
 }
 
