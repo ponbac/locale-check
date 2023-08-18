@@ -1,7 +1,7 @@
 use std::{collections::HashSet, path::PathBuf};
 
+use check_translations::{translation_file::TranslationFile, ts_file::TSFile};
 use clap::Parser;
-use locale_check::{translation_file::TranslationFile, ts_file::TSFile};
 use walkdir::{DirEntry, WalkDir};
 
 /// Handle those damn translations...
