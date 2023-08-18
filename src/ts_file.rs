@@ -133,7 +133,7 @@ fn extract_id_equals_from_line(line: &str) -> Option<String> {
             if let Some(second_split) = second_split {
                 id = Some(second_split.to_string());
             } else {
-                println!("Unable to split line: {}", line);
+                // println!("Unable to split line: {}", line);
             }
         }
     }
@@ -150,7 +150,7 @@ fn extract_id_colon_from_line(line: &str) -> Option<String> {
             if let Some(second_split) = second_split {
                 id = Some(second_split.to_string());
             } else {
-                println!("Unable to split line: {}", line);
+                // println!("Unable to split line: {}", line);
             }
         }
     }
@@ -165,7 +165,7 @@ fn extract_next_quote(line: &str, start_index: usize) -> Option<String> {
     if let Some(second_split) = second_split {
         id = Some(second_split.trim_end_matches('"').to_string());
     } else {
-        println!("Unable to split line: {}", line);
+        // println!("Unable to split line: {}", line);
     }
 
     id
