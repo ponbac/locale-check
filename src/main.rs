@@ -17,6 +17,9 @@ struct Args {
     /// Path to Swedish translation file
     #[arg(short, long)]
     sv_file: PathBuf,
+    /// Path to key ignore unused file
+    #[arg(short, long)]
+    ignore_file: Option<PathBuf>,
 }
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
@@ -62,15 +65,20 @@ fn main() {
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
-                    let ts_file = TSFile::new(path);
+                    let mut ts_file = TSFile::new(path);
 
+                    let formatted_message_keys = ts_file
+                        .find_formatted_message_usages()
+                        .into_iter()
+                        .map(|(_, key)| key)
+                        .collect::<Vec<_>>();
                     let format_message_keys = ts_file
                         .find_format_message_usages()
                         .into_iter()
                         .map(|(_, key)| key)
                         .collect::<Vec<_>>();
-                    let formatted_message_keys = ts_file
-                        .find_formatted_message_usages()
+                    let misc_usages = ts_file
+                        .find_misc_usages()
                         .into_iter()
                         .map(|(_, key)| key)
                         .collect::<Vec<_>>();
@@ -78,16 +86,27 @@ fn main() {
                     // Insert all keys into the set
                     used_keys.extend(format_message_keys);
                     used_keys.extend(formatted_message_keys);
+                    used_keys.extend(misc_usages);
                 }
             }
         }
     }
 
     // Check that all keys are used
+    let ignore_unused_keys = if let Some(ignore_file) = args.ignore_file {
+        let ignore_file = std::fs::read_to_string(ignore_file).unwrap();
+        ignore_file
+            .lines()
+            .map(|line| line.trim().to_string())
+            .collect::<Vec<_>>()
+    } else {
+        Vec::new()
+    };
+
     let mut unused_keys = Vec::new();
-    en_translation_file.entries.iter().for_each(|(key, _)| {
-        if !used_keys.contains(key) {
-            println!("key \"{}\" is never used!", key);
+    en_translation_file.entries.iter().for_each(|(key, value)| {
+        if !used_keys.contains(key) && !ignore_unused_keys.contains(key) {
+            println!("key \"{}\"=\"{}\" is never used!", key, value);
             unused_keys.push(key.clone());
         }
     });
