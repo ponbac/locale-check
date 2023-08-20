@@ -76,25 +76,16 @@ impl TSFile {
     }
 }
 
-/// Discard everything before the end of the opening tag
-// fn contains_opening_tag<'a>(input: &'a str, opening_tag: &'a str) -> IResult<&'a str, &'a str> {
-//     let (input, _) = opt(multispace0)(input)?;
-//     let (input, _) = take_until(opening_tag)(input)?;
-//     let (remaining_input, _) = tag(opening_tag)(input)?;
-//     Ok((remaining_input, opening_tag))
-// }
-
-/// Extract the id from the line
-/// e.g. {intl.formatMessage({ id: "name" })}...
-/// returns "name"
 fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
     let (input, _) = opt(multispace0)(input)?;
     let (input, _) = take_until(id_tag)(input)?;
     let (input, _) = tag(id_tag)(input)?;
     let (input, _) = opt(multispace0)(input)?;
+
+    let (input, _) = take_until("\"")(input)?;
     let (input, _) = tag("\"")(input)?;
     let (input, id) = take_until("\"")(input)?;
-    let (input, _) = tag("\"")(input)?;
+
     Ok((input, id.to_string()))
 }
 
@@ -119,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_id() {
+    fn test_extract_id_colon() {
         let input = r#"translationId: "some_id""#;
         let expected = "some_id".to_string();
         let (_, actual) = extract_id(input, "translationId: ").unwrap();
@@ -127,12 +118,18 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_id_with_whitespace_and_newline() {
-        let input = r#"
-        translationId: "some_id"
-        "#;
+    fn test_extract_id_equals() {
+        let input = r#"translationId="some_id""#;
         let expected = "some_id".to_string();
-        let (_, actual) = extract_id(input, "translationId: ").unwrap();
+        let (_, actual) = extract_id(input, "translationId=").unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_extract_id_braces() {
+        let input = r#"translationId={"some_id"}"#;
+        let expected = "some_id".to_string();
+        let (_, actual) = extract_id(input, "translationId=").unwrap();
         assert_eq!(expected, actual);
     }
 }
