@@ -1,10 +1,10 @@
 {
-  "name": "tl-check",
-  "version": "0.0.10",
+  "name": "ramilang",
+  "version": "0.0.12",
   "description": "",
   "main": "index.js",
   "bin": {
-    "tl-check": "./npm/run.js"
+    "ramilang": "./npm/run.js"
   },
   "scripts": {
     "postinstall": "node ./npm/install.js"

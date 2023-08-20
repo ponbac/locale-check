@@ -16,8 +16,8 @@ function getPlatform() {
 function getBinary() {
   const platform = getPlatform();
   const version = require("../package.json").version;
-  const name = "tl-check";
-  const url = `https://github.com/ponbac/tl-check/releases/download/v${version}/${name}-${platform}.tar.gz`;
+  const name = "ramilang";
+  const url = `https://github.com/ponbac/ramilang/releases/download/v${version}/${name}-${platform}.tar.gz`;
   return new Binary(name, url);
 }
 

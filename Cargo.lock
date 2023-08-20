@@ -200,6 +200,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ramilang"
+version = "0.0.12"
+dependencies = [
+ "clap",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "walkdir",
+]
+
+[[package]]
 name = "rustix"
 version = "0.38.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -293,17 +304,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "tl-check"
-version = "0.0.10"
-dependencies = [
- "clap",
- "serde",
- "serde_json",
- "thiserror",
- "walkdir",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 use std::{collections::HashSet, path::PathBuf};
 
 use clap::Parser;
-use tl_check::{translation_file::TranslationFile, ts_file::TSFile};
+use ramilang::{translation_file::TranslationFile, ts_file::TSFile};
 use walkdir::{DirEntry, WalkDir};
 
 /// Handle those damn translations...
