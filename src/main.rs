@@ -1,6 +1,7 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::{collections::HashSet, fmt::format, path::PathBuf};
 
 use clap::Parser;
+use console::style;
 use ramilang::{translation_file::TranslationFile, ts_file::TSFile};
 use walkdir::{DirEntry, WalkDir};
 
@@ -106,15 +107,35 @@ fn main() {
     let mut unused_keys = Vec::new();
     en_translation_file.entries.iter().for_each(|(key, value)| {
         if !used_keys.contains(key) && !ignore_unused_keys.contains(key) {
-            println!("key \"{}\"=\"{}\" is never used!", key, value);
+            println!(
+                "{} key {}={}",
+                style("[UNUSED]").yellow().bold(),
+                style(key).bold(),
+                style(format!("\"{}\"", value)).italic(),
+            );
             unused_keys.push(key.clone());
         }
     });
 
-    println!("{} unused keys", unused_keys.len());
-    println!("{} used keys", used_keys.len());
-
     if !unused_keys.is_empty() {
+        println!(
+            "{}{}{}{}",
+            style("ERROR").red().bold(),
+            style(": ").bold(),
+            style(unused_keys.len()).bold(),
+            style(" unused keys found!").bold()
+        );
+        println!(
+            "{}",
+            style("Unused keys should be removed from the translation files if they really are unused.").italic()
+        );
+        println!(
+            "{}",
+            style(
+                "If they are used (false positive), add them to the ignore file (--ignore-file)."
+            )
+            .italic()
+        );
         std::process::exit(1);
     }
 }

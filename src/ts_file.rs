@@ -2,7 +2,6 @@ use nom::{
     bytes::complete::{tag, take_until},
     character::complete::multispace0,
     combinator::opt,
-    error::Error,
     IResult,
 };
 use std::{
