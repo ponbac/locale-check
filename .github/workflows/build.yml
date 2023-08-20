@@ -72,7 +72,7 @@ jobs:
           export CC=o64-clang
           export CXX=o64-clang++
           o64-clang --version
-          cargo build --bin check-translations --release --target "x86_64-apple-darwin"
+          cargo build --release --target "x86_64-apple-darwin"
           mkdir builds/check-translations-macos
           cp target/x86_64-apple-darwin/release/check-translations builds/check-translations-macos
           tar -C builds -czvf dist/check-translations-macos.tar.gz check-translations-macos
