@@ -29,21 +29,21 @@ jobs:
 
       - name: Build Win64
         run: |
-          cargo rustc --release --target=x86_64-pc-windows-gnu -- -C linker=x86_64-w64-mingw32-gcc
+          cargo rustc --bin check-translations --release --target=x86_64-pc-windows-gnu -- -C linker=x86_64-w64-mingw32-gcc
           mkdir builds/check-translations-win64
           cp target/x86_64-pc-windows-gnu/release/swp.exe builds/check-translations-win64
           tar -C builds -czvf dist/check-translations-win64.tar.gz check-translations-win64
 
       - name: Build Win32
         run: |
-          cargo rustc --release --target=i686-pc-windows-gnu -- -C linker=i686-w64-mingw32-gcc -C link-args=-mwindows -C panic=abort
+          cargo rustc --bin check-translations --release --target=i686-pc-windows-gnu -- -C linker=i686-w64-mingw32-gcc -C link-args=-mwindows -C panic=abort
           mkdir builds/check-translations-win32
           cp target/i686-pc-windows-gnu/release/swp.exe builds/check-translations-win32
           tar -C builds -czvf dist/check-translations-win32.tar.gz check-translations-win32
 
       - name: Build Linux
         run: |
-          cargo rustc --release --target=x86_64-unknown-linux-gnu
+          cargo rustc --bin check-translations --release --target=x86_64-unknown-linux-gnu
           mkdir builds/check-translations-linux
           cp target/x86_64-unknown-linux-gnu/release/swp builds/check-translations-linux
           tar -C builds -czvf dist/check-translations-linux.tar.gz check-translations-linux
@@ -71,7 +71,7 @@ jobs:
           export LIBZ_SYS_STATIC=1
           export CC=o64-clang
           export CXX=o64-clang++
-          cargo build --release --target "x86_64-apple-darwin"
+          cargo build --bin check-translations --release --target "x86_64-apple-darwin"
           mkdir builds/check-translations-macos
           cp target/x86_64-apple-darwin/release/swp builds/check-translations-macos
           tar -C builds -czvf dist/check-translations-macos.tar.gz check-translations-macos
