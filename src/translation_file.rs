@@ -18,20 +18,21 @@ pub enum TranslationFileError {
     EmptyValue(String),
     #[error("key \"{key}\" is missing from {missing_in}")]
     MissingKey { key: String, missing_in: PathBuf },
+    #[error("duplicate keys found in {0}, keys: {1:?}")]
+    DuplicateKeys(PathBuf, Vec<String>),
 }
 
 impl TranslationFile {
-    pub fn new(path: PathBuf) -> Self {
+    pub fn new(path: PathBuf) -> Result<Self, TranslationFileError> {
         let duplicates = find_key_duplicates(&path);
         if !duplicates.is_empty() {
-            println!("duplicate keys found in file {:?}: {:?}", path, duplicates);
-            std::process::exit(1);
+            return Err(TranslationFileError::DuplicateKeys(path, duplicates));
         }
 
         let file = std::fs::File::open(&path).expect("Unable to open file");
         let reader = std::io::BufReader::new(file);
         let entries = serde_json::from_reader(reader).unwrap();
-        Self { path, entries }
+        Ok(Self { path, entries })
     }
 
     /// Compare two translation files and return an error if they are not compatible.

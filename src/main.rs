@@ -1,8 +1,11 @@
-use std::{collections::HashSet, fmt::format, path::PathBuf};
+use std::{collections::HashSet, path::PathBuf};
 
 use clap::Parser;
 use console::style;
-use ramilang::{translation_file::TranslationFile, ts_file::TSFile};
+use ramilang::{
+    translation_file::{TranslationFile, TranslationFileError},
+    ts_file::TSFile,
+};
 use walkdir::{DirEntry, WalkDir};
 
 /// Handle those damn translations...
@@ -27,29 +30,53 @@ static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 
 fn main() {
     let args = Args::parse();
+    println!("\n{}\n", style("Checking translations...").blue().bold());
 
     // Try to open the translation files
     let en_translation_file = TranslationFile::new(args.en_file);
     let sv_translation_file = TranslationFile::new(args.sv_file);
-    if let Err((en_errors, sv_errors)) =
-        en_translation_file.is_compatible_with(&sv_translation_file)
-    {
-        for error in en_errors {
+    match (&en_translation_file, &sv_translation_file) {
+        (Err(err), _) | (_, Err(err)) => {
             println!(
-                "[{}]: {}",
-                en_translation_file.path.to_str().unwrap(),
-                error
+                "{}{}",
+                style("ERROR").red().bold(),
+                style(format!(": {}", err)).bold()
             );
+            std::process::exit(1);
         }
-        for error in sv_errors {
-            println!(
-                "[{}]: {}",
-                sv_translation_file.path.to_str().unwrap(),
-                error
-            );
-        }
+        (Ok(en_translation_file), Ok(sv_translation_file)) => {
+            if let Err((en_errors, sv_errors)) =
+                en_translation_file.is_compatible_with(sv_translation_file)
+            {
+                for error in en_errors.iter().chain(sv_errors.iter()) {
+                    match error {
+                        TranslationFileError::MissingKey { key, missing_in } => {
+                            println!(
+                                "{} key {} not found in {}",
+                                style("[MISSING]").yellow().bold(),
+                                style(key).bold(),
+                                style(missing_in.to_str().unwrap()).italic()
+                            );
+                        }
+                        TranslationFileError::EmptyValue(key) => {
+                            println!(
+                                "{} key {} seems to be empty",
+                                style("[EMPTY]").yellow().bold(),
+                                style(key).bold()
+                            );
+                        }
+                        _ => {}
+                    }
+                }
 
-        std::process::exit(1);
+                println!(
+                    "{}{}",
+                    style("ERROR").red().bold(),
+                    style(": translation files are not compatible, see problems above").bold()
+                );
+                std::process::exit(1);
+            }
+        }
     }
 
     // Test against all TS files in the root directory
@@ -105,17 +132,21 @@ fn main() {
     };
 
     let mut unused_keys = Vec::new();
-    en_translation_file.entries.iter().for_each(|(key, value)| {
-        if !used_keys.contains(key) && !ignore_unused_keys.contains(key) {
-            println!(
-                "{} key {}={}",
-                style("[UNUSED]").yellow().bold(),
-                style(key).bold(),
-                style(format!("\"{}\"", value)).italic(),
-            );
-            unused_keys.push(key.clone());
-        }
-    });
+    en_translation_file
+        .unwrap()
+        .entries
+        .iter()
+        .for_each(|(key, value)| {
+            if !used_keys.contains(key) && !ignore_unused_keys.contains(key) {
+                println!(
+                    "{} key {}={}",
+                    style("[UNUSED]").yellow().bold(),
+                    style(key).bold(),
+                    style(format!("\"{}\"", value)).italic(),
+                );
+                unused_keys.push(key.clone());
+            }
+        });
 
     if !unused_keys.is_empty() {
         println!(
@@ -138,6 +169,12 @@ fn main() {
         );
         std::process::exit(1);
     }
+
+    println!(
+        "{}{}",
+        style("SUCCESS").green().bold(),
+        style(": great translations!").bold()
+    );
 }
 
 fn is_node_modules(entry: &DirEntry) -> bool {
