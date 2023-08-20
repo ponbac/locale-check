@@ -67,17 +67,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tl-check"
-version = "0.1.0"
-dependencies = [
- "clap",
- "serde",
- "serde_json",
- "thiserror",
- "walkdir",
-]
-
-[[package]]
 name = "clap"
 version = "4.3.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,6 +293,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tl-check"
+version = "0.0.10"
+dependencies = [
+ "clap",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "walkdir",
 ]
 
 [[package]]
