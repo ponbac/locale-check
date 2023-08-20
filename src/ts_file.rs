@@ -1,6 +1,13 @@
+use nom::{
+    bytes::complete::{tag, take_until},
+    character::complete::multispace0,
+    combinator::opt,
+    error::Error,
+    IResult,
+};
 use std::{
     fs::File,
-    io::{BufRead, Seek},
+    io::{BufRead, BufReader, Seek},
     path::Path,
 };
 
@@ -10,163 +17,122 @@ pub struct TSFile {
 
 impl TSFile {
     pub fn new(path: &Path) -> Self {
-        let file = std::fs::File::open(path).expect("Unable to open file");
-
+        let file = File::open(path).expect("Unable to open file");
         Self { file }
     }
 
-    /// Find all usages of `<FormattedMessage />` in a file, and return
-    /// the id (e.g. `id="CO2_title"`) of the translation key used as
-    /// well as the line number.
     pub fn find_formatted_message_usages(&mut self) -> Vec<(usize, String)> {
-        let mut translation_key_usages: Vec<(usize, String)> = Vec::new();
-
-        let mut looking_for_id = false;
-        for (line_number, line) in std::io::BufReader::new(&self.file).lines().enumerate() {
-            match (line, looking_for_id) {
-                (Ok(line), false) => {
-                    if line.contains("<FormattedMessage") {
-                        looking_for_id = true;
-
-                        if line.contains("id=") {
-                            let key = extract_id_equals_from_line(&line);
-                            if let Some(key) = key {
-                                translation_key_usages.push((line_number, key));
-                            }
-                            looking_for_id = false;
-                        }
-                    }
-                }
-                (Ok(line), true) => {
-                    if line.contains("id=") {
-                        let key = extract_id_equals_from_line(&line);
-                        if let Some(key) = key {
-                            translation_key_usages.push((line_number, key));
-                        }
-                        looking_for_id = false;
-                    }
-                }
-                (Err(e), _) => {
-                    println!("Error reading line: {}", e);
-                }
-            }
-        }
-
-        self.file.rewind().unwrap();
-        translation_key_usages
+        self.find_usages("<FormattedMessage", "id=")
     }
 
     pub fn find_format_message_usages(&mut self) -> Vec<(usize, String)> {
-        let mut translation_key_usages: Vec<(usize, String)> = Vec::new();
-
-        let mut looking_for_id = false;
-        for (line_number, line) in std::io::BufReader::new(&self.file).lines().enumerate() {
-            match (line, looking_for_id) {
-                (Ok(line), false) => {
-                    if line.contains("formatMessage({") {
-                        looking_for_id = true;
-
-                        if line.contains("id:") {
-                            let key = extract_id_colon_from_line(&line);
-                            if let Some(key) = key {
-                                translation_key_usages.push((line_number, key));
-                            }
-                            looking_for_id = false;
-                        }
-                    }
-                }
-                (Ok(line), true) => {
-                    if line.contains("id:") {
-                        let key = extract_id_colon_from_line(&line);
-                        if let Some(key) = key {
-                            translation_key_usages.push((line_number, key));
-                        }
-                        looking_for_id = false;
-                    }
-                }
-                (Err(e), _) => {
-                    println!("Error reading line: {}", e);
-                }
-            }
-        }
-
-        self.file.rewind().unwrap();
-        translation_key_usages
+        self.find_usages("formatMessage({", "id:")
     }
 
     pub fn find_misc_usages(&mut self) -> Vec<(usize, String)> {
-        let mut translation_key_usages: Vec<(usize, String)> = Vec::new();
-
         let identifiers = ["translationId:", "translationKey:", "transId:"];
-        for (line_number, line) in std::io::BufReader::new(&self.file).lines().enumerate() {
-            match line {
-                Ok(line) => {
-                    for identifier in &identifiers {
-                        if line.contains(identifier) {
-                            let key = extract_next_quote(
-                                &line,
-                                line.find(identifier).unwrap() + identifier.len(),
-                            );
-                            if let Some(key) = key {
-                                translation_key_usages.push((line_number, key));
-                            }
+        self.find_usages_multiple_tags(identifiers)
+    }
+
+    fn find_usages(&mut self, opening_tag: &str, id_tag: &str) -> Vec<(usize, String)> {
+        let mut results = Vec::new();
+        let mut found_opening = false;
+        for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
+            if let Ok(line) = line_result {
+                if line.contains(opening_tag) {
+                    found_opening = true;
+                }
+
+                if found_opening {
+                    if let Ok((_, key)) = extract_id(&line, id_tag) {
+                        results.push((line_number + 1, key));
+                        found_opening = false;
+                    }
+                }
+            }
+        }
+
+        self.file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        results
+    }
+
+    fn find_usages_multiple_tags(&mut self, tags: [&str; 3]) -> Vec<(usize, String)> {
+        let mut results = Vec::new();
+        for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
+            if let Ok(line) = line_result {
+                for &tag_str in &tags {
+                    if tag::<_, _, Error<&str>>(tag_str)(line.as_str()).is_ok() {
+                        if let Ok((_, key)) = extract_id(line.as_str(), tag_str) {
+                            results.push((line_number, key));
+                            break;
                         }
                     }
                 }
-                Err(e) => {
-                    println!("Error reading line: {}", e);
-                }
             }
         }
 
-        self.file.rewind().unwrap();
-        translation_key_usages
+        self.file.seek(std::io::SeekFrom::Start(0)).unwrap();
+        results
     }
 }
 
-fn extract_id_equals_from_line(line: &str) -> Option<String> {
-    let mut id = None;
-    if line.contains("id=") {
-        let first_split = line.split("id=\"").nth(1);
-        if let Some(first_split) = first_split {
-            let second_split = first_split.split('"').next();
-            if let Some(second_split) = second_split {
-                id = Some(second_split.to_string());
-            } else {
-                // println!("Unable to split line: {}", line);
-            }
-        }
-    }
+/// Discard everything before the end of the opening tag
+// fn contains_opening_tag<'a>(input: &'a str, opening_tag: &'a str) -> IResult<&'a str, &'a str> {
+//     let (input, _) = opt(multispace0)(input)?;
+//     let (input, _) = take_until(opening_tag)(input)?;
+//     let (remaining_input, _) = tag(opening_tag)(input)?;
+//     Ok((remaining_input, opening_tag))
+// }
 
-    id
+/// Extract the id from the line
+/// e.g. {intl.formatMessage({ id: "name" })}...
+/// returns "name"
+fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
+    let (input, _) = opt(multispace0)(input)?;
+    let (input, _) = take_until(id_tag)(input)?;
+    let (input, _) = tag(id_tag)(input)?;
+    let (input, _) = opt(multispace0)(input)?;
+    let (input, _) = tag("\"")(input)?;
+    let (input, id) = take_until("\"")(input)?;
+    let (input, _) = tag("\"")(input)?;
+    Ok((input, id.to_string()))
 }
 
-fn extract_id_colon_from_line(line: &str) -> Option<String> {
-    let mut id = None;
-    if line.contains("id:") {
-        let first_split = line.split("id: \"").nth(1);
-        if let Some(first_split) = first_split {
-            let second_split = first_split.split('"').next();
-            if let Some(second_split) = second_split {
-                id = Some(second_split.to_string());
-            } else {
-                // println!("Unable to split line: {}", line);
-            }
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_format_message_usages() {
+        let mut ts_file = TSFile::new(Path::new("test_files/component.tsx"));
+        let actual = ts_file.find_format_message_usages();
+        let expected = vec![(20, "name".to_string())];
+        assert_eq!(expected, actual);
     }
 
-    id
-}
-
-fn extract_next_quote(line: &str, start_index: usize) -> Option<String> {
-    let mut id = None;
-    let first_split = line.split_at(start_index).1;
-    let second_split = first_split.split('"').nth(1);
-    if let Some(second_split) = second_split {
-        id = Some(second_split.trim_end_matches('"').to_string());
-    } else {
-        // println!("Unable to split line: {}", line);
+    #[test]
+    fn test_find_formatted_message_usages() {
+        let mut ts_file = TSFile::new(Path::new("test_files/component.tsx"));
+        let actual = ts_file.find_formatted_message_usages();
+        let expected = vec![(22, "name".to_string()), (23, "name".to_string())];
+        assert_eq!(expected, actual);
     }
 
-    id
+    #[test]
+    fn test_extract_id() {
+        let input = r#"translationId: "some_id""#;
+        let expected = "some_id".to_string();
+        let (_, actual) = extract_id(input, "translationId: ").unwrap();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_extract_id_with_whitespace_and_newline() {
+        let input = r#"
+        translationId: "some_id"
+        "#;
+        let expected = "some_id".to_string();
+        let (_, actual) = extract_id(input, "translationId: ").unwrap();
+        assert_eq!(expected, actual);
+    }
 }
