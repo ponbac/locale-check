@@ -61,10 +61,9 @@ impl TSFile {
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
                 for &tag_str in &tags {
-                    if tag::<_, _, Error<&str>>(tag_str)(line.as_str()).is_ok() {
-                        if let Ok((_, key)) = extract_id(line.as_str(), tag_str) {
-                            results.push((line_number, key));
-                            break;
+                    if line.contains(tag_str) {
+                        if let Ok((_, key)) = extract_id(&line, tag_str) {
+                            results.push((line_number + 1, key));
                         }
                     }
                 }
