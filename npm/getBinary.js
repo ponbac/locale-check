@@ -18,7 +18,7 @@ function getBinary() {
   const version = require("../package.json").version;
   const name = "check-translations";
   const url = `https://github.com/ponbac/locale-check/releases/download/v${version}/${name}-${platform}.tar.gz`;
-  return new Binary(url, { name });
+  return new Binary(name, url);
 }
 
 module.exports = getBinary;
