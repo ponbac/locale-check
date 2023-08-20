@@ -1,10 +1,10 @@
 {
-  "name": "rami-tl-check",
-  "version": "0.0.9",
+  "name": "tl-check",
+  "version": "0.0.10",
   "description": "",
   "main": "index.js",
   "bin": {
-    "check-translations": "./npm/run.js"
+    "tl-check": "./npm/run.js"
   },
   "scripts": {
     "postinstall": "node ./npm/install.js"

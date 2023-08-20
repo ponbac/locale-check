@@ -67,7 +67,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "check-translations"
+name = "tl-check"
 version = "0.1.0"
 dependencies = [
  "clap",

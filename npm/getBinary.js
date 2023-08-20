@@ -16,8 +16,8 @@ function getPlatform() {
 function getBinary() {
   const platform = getPlatform();
   const version = require("../package.json").version;
-  const name = "check-translations";
-  const url = `https://github.com/ponbac/locale-check/releases/download/v${version}/${name}-${platform}.tar.gz`;
+  const name = "tl-check";
+  const url = `https://github.com/ponbac/tl-check/releases/download/v${version}/${name}-${platform}.tar.gz`;
   return new Binary(name, url);
 }
 
