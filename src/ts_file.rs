@@ -25,7 +25,7 @@ impl TSFile {
     }
 
     pub fn find_format_message_usages(&mut self) -> Vec<(usize, String)> {
-        self.find_usages("formatMessage({", "id:")
+        self.find_usages("formatMessage(", "id:")
     }
 
     pub fn find_misc_usages(&mut self) -> Vec<(usize, String)> {
