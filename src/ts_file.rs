@@ -1,7 +1,5 @@
 use nom::{
     bytes::complete::{tag, take_until},
-    character::complete::multispace0,
-    combinator::opt,
     IResult,
 };
 use std::{
@@ -9,6 +7,8 @@ use std::{
     io::{BufRead, BufReader, Seek},
     path::Path,
 };
+
+use crate::fenced;
 
 pub struct TSFile {
     pub file: File,
@@ -75,14 +75,11 @@ impl TSFile {
 }
 
 fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
-    let (input, _) = opt(multispace0)(input)?;
     let (input, _) = take_until(id_tag)(input)?;
     let (input, _) = tag(id_tag)(input)?;
-    let (input, _) = opt(multispace0)(input)?;
 
     let (input, _) = take_until("\"")(input)?;
-    let (input, _) = tag("\"")(input)?;
-    let (input, id) = take_until("\"")(input)?;
+    let (input, id) = fenced("\"", "\"")(input)?;
 
     Ok((input, id.to_string()))
 }
