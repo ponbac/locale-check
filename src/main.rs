@@ -150,11 +150,10 @@ fn main() {
 
     if !unused_keys.is_empty() {
         println!(
-            "{}{}{}{}",
+            "{}{} {}",
             style("ERROR").red().bold(),
-            style(": ").bold(),
-            style(unused_keys.len()).bold(),
-            style(" unused keys found!").bold()
+            style(format!(": {} unused keys found!", unused_keys.len(),)).bold(),
+            style(format!("({} keys ignored)", ignore_unused_keys.len())).italic()
         );
         println!(
             "{}",
