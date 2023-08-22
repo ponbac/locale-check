@@ -1,3 +1,3 @@
 # Improvements
 
-- Trying to get Mac compilation working!
+- Fixed empty line in translation files bug!
