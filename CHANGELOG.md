@@ -1,3 +1,3 @@
 # Improvements
 
-- Fixed empty line in translation files bug!
+- Now checks all invalid key usages and also links to the relevant line!
