@@ -28,8 +28,17 @@ impl TSFile {
         self.find_usages("formatMessage(", "id:")
     }
 
+    /// Random usage patterns that are not covered by the other methods.
+    ///
+    /// TODO: Should read these from a config file probably!
     pub fn find_misc_usages(&mut self) -> Vec<(usize, String)> {
-        let identifiers = ["translationId:", "translationKey:", "transId:"];
+        let identifiers = [
+            "translationId:",
+            "translationKey:",
+            "transId:",
+            "pageTitleId=",
+            "titleId=",
+        ];
         self.find_usages_multiple_tags(identifiers)
     }
 
@@ -55,7 +64,7 @@ impl TSFile {
         results
     }
 
-    fn find_usages_multiple_tags(&mut self, tags: [&str; 3]) -> Vec<(usize, String)> {
+    fn find_usages_multiple_tags(&mut self, tags: [&str; 5]) -> Vec<(usize, String)> {
         let mut results = Vec::new();
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
