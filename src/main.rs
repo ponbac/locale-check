@@ -120,6 +120,30 @@ fn main() {
         }
     }
 
+    // Check that all usages are valid
+    let mut invalid_usages = Vec::new();
+
+    let entries = en_translation_file.as_ref().unwrap().entries.clone();
+    used_keys.iter().for_each(|key| {
+        if !entries.contains_key(key.as_str()) {
+            println!(
+                "{} key {} does not exist!",
+                style("[INVALID]").yellow().bold(),
+                style(key).bold(),
+            );
+            invalid_usages.push(key.clone());
+        }
+    });
+
+    if !invalid_usages.is_empty() {
+        println!(
+            "{}{}",
+            style("ERROR").red().bold(),
+            style(format!(": {} invalid key usages!", invalid_usages.len())).bold(),
+        );
+        std::process::exit(1);
+    }
+
     // Check that all keys are used
     let ignore_unused_keys = if let Some(ignore_file) = args.ignore_file {
         let ignore_file = std::fs::read_to_string(ignore_file).unwrap();
