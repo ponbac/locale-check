@@ -5,33 +5,45 @@ use nom::{
 use std::{
     fs::File,
     io::{BufRead, BufReader, Seek},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::fenced;
 
+#[derive(Debug)]
 pub struct TSFile {
     pub file: File,
+    pub path: PathBuf,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct KeyUsage {
+    pub key: String,
+    pub line: usize,
+    pub file_path: PathBuf,
 }
 
 impl TSFile {
     pub fn new(path: &Path) -> Self {
         let file = File::open(path).expect("Unable to open file");
-        Self { file }
+        Self {
+            file,
+            path: path.to_path_buf(),
+        }
     }
 
-    pub fn find_formatted_message_usages(&mut self) -> Vec<(usize, String)> {
+    pub fn find_formatted_message_usages(&mut self) -> Vec<KeyUsage> {
         self.find_usages("<FormattedMessage", "id=")
     }
 
-    pub fn find_format_message_usages(&mut self) -> Vec<(usize, String)> {
+    pub fn find_format_message_usages(&mut self) -> Vec<KeyUsage> {
         self.find_usages("formatMessage(", "id:")
     }
 
-    /// Random usage patterns that are not covered by the other methods.
+    /// Random usage patterns that are used in the codebase.
     ///
-    /// TODO: Should read these from a config file probably!
-    pub fn find_misc_usages(&mut self) -> Vec<(usize, String)> {
+    /// TODO: These should probably be read from a config file.
+    pub fn find_misc_usages(&mut self) -> Vec<KeyUsage> {
         let identifiers = [
             "translationId:",
             "translationKey:",
@@ -42,7 +54,7 @@ impl TSFile {
         self.find_usages_multiple_tags(identifiers)
     }
 
-    fn find_usages(&mut self, opening_tag: &str, id_tag: &str) -> Vec<(usize, String)> {
+    fn find_usages(&mut self, opening_tag: &str, id_tag: &str) -> Vec<KeyUsage> {
         let mut results = Vec::new();
         let mut found_opening = false;
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
@@ -53,7 +65,11 @@ impl TSFile {
 
                 if found_opening {
                     if let Ok((_, key)) = extract_id(&line, id_tag) {
-                        results.push((line_number + 1, key));
+                        results.push(KeyUsage {
+                            key,
+                            line: line_number + 1,
+                            file_path: self.path.to_path_buf(),
+                        });
                         found_opening = false;
                     }
                 }
@@ -64,14 +80,18 @@ impl TSFile {
         results
     }
 
-    fn find_usages_multiple_tags(&mut self, tags: [&str; 5]) -> Vec<(usize, String)> {
+    fn find_usages_multiple_tags(&mut self, tags: [&str; 5]) -> Vec<KeyUsage> {
         let mut results = Vec::new();
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
                 for &tag_str in &tags {
                     if line.contains(tag_str) {
                         if let Ok((_, key)) = extract_id(&line, tag_str) {
-                            results.push((line_number + 1, key));
+                            results.push(KeyUsage {
+                                key,
+                                line: line_number + 1,
+                                file_path: self.path.to_path_buf(),
+                            });
                         }
                     }
                 }
@@ -99,17 +119,34 @@ mod tests {
 
     #[test]
     fn test_find_format_message_usages() {
-        let mut ts_file = TSFile::new(Path::new("test_files/component.tsx"));
+        let path = Path::new("test_files/component.tsx");
+        let mut ts_file = TSFile::new(path);
         let actual = ts_file.find_format_message_usages();
-        let expected = vec![(20, "name".to_string())];
+        let expected = vec![KeyUsage {
+            key: "name".to_string(),
+            line: 20,
+            file_path: path.to_path_buf(),
+        }];
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_find_formatted_message_usages() {
-        let mut ts_file = TSFile::new(Path::new("test_files/component.tsx"));
+        let path = Path::new("test_files/component.tsx");
+        let mut ts_file = TSFile::new(path);
         let actual = ts_file.find_formatted_message_usages();
-        let expected = vec![(22, "name".to_string()), (23, "name".to_string())];
+        let expected = vec![
+            KeyUsage {
+                key: "name".to_string(),
+                line: 22,
+                file_path: path.to_path_buf(),
+            },
+            KeyUsage {
+                key: "name".to_string(),
+                line: 23,
+                file_path: path.to_path_buf(),
+            },
+        ];
         assert_eq!(expected, actual);
     }
 

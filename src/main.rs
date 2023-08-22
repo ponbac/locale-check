@@ -1,10 +1,10 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
 use console::style;
 use ramilang::{
     translation_file::{TranslationFile, TranslationFileError},
-    ts_file::TSFile,
+    ts_file::{KeyUsage, TSFile},
 };
 use walkdir::{DirEntry, WalkDir};
 
@@ -87,7 +87,7 @@ fn main() {
         // Filter out any non-accessible files
         .filter_map(|e| e.ok());
 
-    let mut used_keys = HashSet::new();
+    let mut key_usages: Vec<KeyUsage> = Vec::new();
     for entry in walker {
         let path = entry.path();
         if path.is_file() {
@@ -95,51 +95,47 @@ fn main() {
                 if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
                     let mut ts_file = TSFile::new(path);
 
-                    let formatted_message_keys = ts_file
-                        .find_formatted_message_usages()
-                        .into_iter()
-                        .map(|(_, key)| key)
-                        .collect::<Vec<_>>();
-                    let format_message_keys = ts_file
-                        .find_format_message_usages()
-                        .into_iter()
-                        .map(|(_, key)| key)
-                        .collect::<Vec<_>>();
-                    let misc_usages = ts_file
-                        .find_misc_usages()
-                        .into_iter()
-                        .map(|(_, key)| key)
-                        .collect::<Vec<_>>();
+                    // Collect KeyUsage from different methods
+                    let formatted_message_keys = ts_file.find_formatted_message_usages();
+                    let format_message_keys = ts_file.find_format_message_usages();
+                    let misc_usages = ts_file.find_misc_usages();
 
-                    // Insert all keys into the set
-                    used_keys.extend(format_message_keys);
-                    used_keys.extend(formatted_message_keys);
-                    used_keys.extend(misc_usages);
+                    // Extend the used_keys vector with the KeyUsages
+                    key_usages.extend(format_message_keys);
+                    key_usages.extend(formatted_message_keys);
+                    key_usages.extend(misc_usages);
                 }
             }
         }
     }
 
     // Check that all usages are valid
-    let mut invalid_usages = Vec::new();
+    let mut n_invalid_usages = 0;
 
     let entries = en_translation_file.as_ref().unwrap().entries.clone();
-    used_keys.iter().for_each(|key| {
-        if !entries.contains_key(key.as_str()) {
+    key_usages.iter().for_each(|usage| {
+        if !entries.contains_key(usage.key.as_str()) {
             println!(
-                "{} key {} does not exist!",
+                "{} key {} does not exist! {}",
                 style("[INVALID]").yellow().bold(),
-                style(key).bold(),
+                style(usage.key.as_str()).bold(),
+                style(format!(
+                    "({}:{})",
+                    usage.file_path.to_str().unwrap(),
+                    usage.line
+                ))
+                .italic()
+                .dim()
             );
-            invalid_usages.push(key.clone());
+            n_invalid_usages += 1;
         }
     });
 
-    if !invalid_usages.is_empty() {
+    if n_invalid_usages != 0 {
         println!(
             "{}{}",
             style("ERROR").red().bold(),
-            style(format!(": {} invalid key usages!", invalid_usages.len())).bold(),
+            style(format!(": {} invalid key usages!", n_invalid_usages)).bold(),
         );
         std::process::exit(1);
     }
@@ -161,7 +157,9 @@ fn main() {
         .entries
         .iter()
         .for_each(|(key, value)| {
-            if !used_keys.contains(key) && !ignore_unused_keys.contains(key) {
+            if !key_usages.iter().any(|usage| usage.key == *key)
+                && !ignore_unused_keys.contains(key)
+            {
                 println!(
                     "{} key {}={}",
                     style("[UNUSED]").yellow().bold(),
