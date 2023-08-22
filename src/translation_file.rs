@@ -81,7 +81,7 @@ fn find_key_duplicates(json_reader: &PathBuf) -> Vec<String> {
     let mut set = std::collections::HashSet::new();
     let mut duplicates = Vec::new();
 
-    for line in lines.flatten() {
+    for line in lines.flatten().filter(|l| !l.trim().is_empty()) {
         let key = line
             .split(':')
             .next()
