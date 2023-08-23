@@ -1,10 +1,11 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Write, Read},
     path::PathBuf,
 };
 
+use serde_json::{Map, Value};
 use thiserror::Error;
 
 pub struct TranslationFile {
@@ -96,4 +97,31 @@ fn find_key_duplicates(json_reader: &PathBuf) -> Vec<String> {
     }
 
     duplicates
+}
+
+fn sort_json_keys(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Read the content from the given file
+    let mut file = File::open(file_path)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+
+    // Parse the content as a JSON object
+    let json_value: Value = serde_json::from_str(&content)?;
+    let object = json_value.as_object().unwrap();
+
+    // Sort the keys using BTreeMap
+    let sorted_map: BTreeMap<String, Value> =
+        object.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+
+    // Convert back to Value
+    let sorted_value = Value::Object(sorted_map.into_iter().collect::<Map<String, Value>>());
+
+    // Convert back to JSON string
+    let sorted_json = serde_json::to_string_pretty(&sorted_value)?;
+
+    // Write the sorted JSON back to the file
+    let mut file = File::create(file_path)?;
+    file.write_all(sorted_json.as_bytes())?;
+
+    Ok(())
 }
