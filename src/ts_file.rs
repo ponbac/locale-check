@@ -71,6 +71,9 @@ impl TSFile {
                             file_path: self.path.to_path_buf(),
                         });
                         found_opening = false;
+                    } else if line.contains("/>") {
+                        // TODO: think about edge cases where this might not be true!
+                        found_opening = false;
                     }
                 }
             }
@@ -148,6 +151,13 @@ mod tests {
             },
         ];
         assert_eq!(expected, actual);
+
+        // let path = Path::new("test_files/select-component.tsx");
+        // let mut ts_file = TSFile::new(path);
+        // let actual = ts_file.find_formatted_message_usages();
+        // for usage in &actual {
+        //     println!("{:?}", usage.key);
+        // }
     }
 
     #[test]
