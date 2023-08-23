@@ -1,3 +1,3 @@
 # Improvements
 
-- Sort keys in translation files alphabetically!
+- Added proper README.md
