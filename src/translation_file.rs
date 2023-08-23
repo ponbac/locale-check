@@ -1,7 +1,7 @@
 use std::{
     collections::{BTreeMap, HashMap},
     fs::File,
-    io::{BufRead, BufReader, Write, Read},
+    io::{BufRead, BufReader, Read, Write},
     path::PathBuf,
 };
 
@@ -72,6 +72,10 @@ impl TranslationFile {
         }
 
         errors
+    }
+
+    pub fn sort_keys(&self) -> Result<(), Box<dyn std::error::Error>> {
+        sort_json_keys(self.path.to_str().unwrap())
     }
 }
 

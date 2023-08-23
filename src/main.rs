@@ -24,17 +24,22 @@ struct Args {
     /// Path to key ignore unused file
     #[arg(short, long)]
     ignore_file: Option<PathBuf>,
+    /// Sort keys in translation files
+    #[arg(long, action)]
+    sort: bool,
 }
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 
 fn main() {
     let args = Args::parse();
-    println!("\n{}\n", style("Checking translations...").blue().bold());
 
     // Try to open the translation files
-    let en_translation_file = TranslationFile::new(args.en_file);
-    let sv_translation_file = TranslationFile::new(args.sv_file);
+    let en_translation_file = TranslationFile::new(args.en_file.clone());
+    let sv_translation_file = TranslationFile::new(args.sv_file.clone());
+
+    println!("\n{}\n", style("Checking translations...").blue().bold());
+    // Check for problems with the translation files
     match (&en_translation_file, &sv_translation_file) {
         (Err(err), _) | (_, Err(err)) => {
             println!(
@@ -196,6 +201,25 @@ fn main() {
         style("SUCCESS").green().bold(),
         style(": great translations!").bold()
     );
+
+    // Sort the translation files if requested
+    if args.sort {
+        println!(
+            "\n{}\n",
+            style("Sorting translation files...").blue().bold()
+        );
+
+        let en_file = TranslationFile::new(args.en_file).unwrap();
+        let sv_file = TranslationFile::new(args.sv_file).unwrap();
+        en_file.sort_keys().unwrap();
+        sv_file.sort_keys().unwrap();
+
+        println!(
+            "{}{}",
+            style("SUCCESS").green().bold(),
+            style(": translation files sorted!").bold()
+        );
+    }
 }
 
 fn is_node_modules(entry: &DirEntry) -> bool {
