@@ -10,7 +10,7 @@ Command-line interface (CLI) tool to handle and validate translations in `RamiCu
 - **Sort Translation Keys:** Option to sort keys in the translation files.
 - **Check Unused Keys:** Detects keys that are not being used in the codebase (`ts` and `tsx` files).
 - **Detect Usage of Invalid Keys:** Detects usage of keys that does not exist (`ts` and `tsx` files).
-- **Custom Ignore List:** Ability to ignore certain keys from the unused keys check. Useful for keys that are used in a non-standard way. Making static analysis hard.
+- **Custom Ignore List:** Ability to ignore certain keys from the unused keys check. Useful for keys that are used in a non-standard way, making static analysis hard.
 
 ## Usage from customer portal `turborepo` root
 
