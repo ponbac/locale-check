@@ -68,7 +68,7 @@ pub async fn run_server() -> Result<()> {
 }
 
 #[derive(Template)]
-#[template(path = "todo-list.html")]
+#[template(path = "components/todo-list.html")]
 struct TodoList {
     todos: Vec<String>,
 }
@@ -97,7 +97,7 @@ async fn hello_from_the_server() -> &'static str {
 }
 
 #[derive(Template)]
-#[template(path = "hello.html")]
+#[template(path = "pages/hello.html")]
 struct HelloTemplate;
 
 async fn hello() -> impl IntoResponse {
@@ -106,7 +106,7 @@ async fn hello() -> impl IntoResponse {
 }
 
 #[derive(Template)]
-#[template(path = "another-page.html")]
+#[template(path = "pages/another-page.html")]
 struct AnotherPageTemplate;
 
 async fn another_page() -> impl IntoResponse {
