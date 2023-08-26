@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use console::style;
 use ramilang::{
+    server::run_server,
     translation_file::{TranslationFile, TranslationFileError},
     ts_file::{KeyUsage, TSFile},
 };
@@ -22,18 +23,33 @@ struct Args {
     #[arg(short, long)]
     sv_file: PathBuf,
     /// Path to key ignore unused file
-    #[arg(short, long)]
+    #[arg(long)]
     ignore_file: Option<PathBuf>,
     /// Sort keys in translation files
     #[arg(long, action)]
     sort: bool,
+    /// Interactive mode
+    #[arg(long, short, action)]
+    interactive: bool,
 }
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 
 // clear; cargo run -- --sort --root-dir C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\ --en-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\en.json --sv-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\sv.json --ignore-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\.keyignore
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::parse();
+
+    if args.interactive {
+        // println!(
+        //     "{}",
+        //     style("Interactive mode is not implemented yet!")
+        //         .red()
+        //         .bold()
+        // );
+        let _ = run_server().await;
+        std::process::exit(0);
+    }
 
     // Try to open the translation files
     let en_translation_file = TranslationFile::new(args.en_file.clone());
