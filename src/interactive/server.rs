@@ -64,6 +64,10 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         port
     );
 
+    // open browser if release build
+    #[cfg(not(debug_assertions))]
+    webbrowser::open(&format!("http://localhost:{}", port)).context("failed to open browser")?;
+
     axum::Server::bind(&addr)
         .serve(router.into_make_service())
         .await

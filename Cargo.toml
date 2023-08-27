@@ -22,3 +22,4 @@ tower = "0.4.13"
 tower-http = { version = "0.4.3", features = ["fs"] }
 anyhow = "1.0.75"
 askama_axum = "0.3.0"
+webbrowser = "0.8.11"
