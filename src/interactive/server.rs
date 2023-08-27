@@ -49,7 +49,7 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         sv_translation_file,
     });
 
-    let assets_path = std::env::current_dir().unwrap();
+    // let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
@@ -59,11 +59,11 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         .route("/assets/htmx.js", get(get_htmx_js))
         .route("/assets/main.css", get(get_css))
         .route("/favicon.ico", get(get_favicon))
-        .with_state(app_state)
-        .nest_service(
-            "/assets",
-            ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
-        );
+        .with_state(app_state);
+    // .nest_service(
+    //     "/assets",
+    //     ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
+    // );
 
     info!(
         "router initialized, now listening on http://localhost:{}",
