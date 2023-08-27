@@ -1,3 +1,3 @@
 # Improvements
 
-- Fix non-valid usages detected!
+- Testing new interactive mode!
