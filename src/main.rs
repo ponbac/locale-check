@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use console::style;
 use ramilang::{
-    server::run_server,
+    interactive,
     translation_file::{TranslationFile, TranslationFileError},
     ts_file::{KeyUsage, TSFile},
 };
@@ -39,11 +39,6 @@ static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-
-    if args.interactive {
-        let _ = run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
-        std::process::exit(0);
-    }
 
     // Try to open the translation files
     let en_translation_file = TranslationFile::new(args.en_file.clone());
@@ -220,16 +215,22 @@ async fn main() {
             style("Sorting translation files...").blue().bold()
         );
 
-        let en_file = TranslationFile::new(args.en_file).unwrap();
-        let sv_file = TranslationFile::new(args.sv_file).unwrap();
-        en_file.sort_keys().unwrap();
-        sv_file.sort_keys().unwrap();
+        let en_file = TranslationFile::new(args.en_file.clone()).unwrap();
+        let sv_file = TranslationFile::new(args.sv_file.clone()).unwrap();
+        // The translation files are sorted by default (BTreeMap), so we just need to write them back
+        en_file.write().expect("Unable to write EN file");
+        sv_file.write().expect("Unable to sort SV file");
 
         println!(
             "{}{}",
             style("SUCCESS").green().bold(),
             style(": translation files sorted!").bold()
         );
+    }
+
+    if args.interactive {
+        let _ = interactive::run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
+        std::process::exit(0);
     }
 }
 

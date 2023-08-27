@@ -917,6 +917,11 @@ select {
   color: rgb(51 65 85 / var(--tw-text-opacity));
 }
 
+.text-green-400 {
+  --tw-text-opacity: 1;
+  color: rgb(74 222 128 / var(--tw-text-opacity));
+}
+
 .underline {
   text-decoration-line: underline;
 }
