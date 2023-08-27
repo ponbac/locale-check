@@ -1,13 +1,16 @@
 use std::{path::Path, sync::Arc};
 
 use anyhow::{Context, Result};
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, put},
+    Router,
+};
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    interactive::translations::{translations, translations_list},
+    interactive::translations::{edit_translation_value, translations, translations_list},
     translation_file::TranslationFile,
 };
 
@@ -42,6 +45,7 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
 
     let api_router = Router::new()
         .route("/translations", get(translations_list))
+        .route("/translations", put(edit_translation_value))
         .with_state(app_state);
 
     let assets_path = std::env::current_dir().unwrap();

@@ -3,7 +3,9 @@ use std::{collections::BTreeMap, sync::Arc};
 use askama::Template;
 use axum::{
     extract::{Query, State},
+    http::StatusCode,
     response::IntoResponse,
+    Form,
 };
 use serde::Deserialize;
 
@@ -11,12 +13,19 @@ use crate::interactive::HtmlTemplate;
 
 use super::server::AppState;
 
+// Translations root page
 #[derive(Template)]
 #[template(path = "pages/translations.html")]
 struct TranslationsTemplate {}
 
 pub async fn translations() -> impl IntoResponse {
     HtmlTemplate(TranslationsTemplate {})
+}
+
+// Translations list
+#[derive(Deserialize)]
+pub struct TranslationsSearchQuery {
+    query: Option<String>,
 }
 
 #[derive(Template)]
@@ -26,14 +35,9 @@ struct TranslationsList {
     sv: Vec<(String, String)>,
 }
 
-#[derive(Deserialize)]
-pub struct TranslationsQuery {
-    query: Option<String>,
-}
-
 pub async fn translations_list(
     State(state): State<Arc<AppState>>,
-    Query(query): Query<TranslationsQuery>,
+    Query(query): Query<TranslationsSearchQuery>,
 ) -> impl IntoResponse {
     let query = query.query.unwrap_or_default().to_ascii_lowercase();
 
@@ -50,4 +54,36 @@ pub async fn translations_list(
 
     let template = TranslationsList { en, sv };
     HtmlTemplate(template)
+}
+
+#[derive(Deserialize)]
+pub struct TranslationValueEdit {
+    key: String,
+    value: String,
+    language: String,
+}
+
+pub async fn edit_translation_value(
+    State(state): State<Arc<AppState>>,
+    Form(query): Form<TranslationValueEdit>,
+) -> impl IntoResponse {
+    match query.language.as_str() {
+        "en" => {
+            let mut en_translation_file = state.en_translation_file.clone();
+            en_translation_file.entries.insert(query.key, query.value);
+            en_translation_file
+                .write()
+                .expect("failed to write en translation file");
+        }
+        "sv" => {
+            let mut sv_translation_file = state.sv_translation_file.clone();
+            sv_translation_file.entries.insert(query.key, query.value);
+            sv_translation_file
+                .write()
+                .expect("failed to write sv translation file");
+        }
+        _ => return (StatusCode::BAD_REQUEST, "invalid language"),
+    }
+
+    (StatusCode::OK, "ok")
 }
