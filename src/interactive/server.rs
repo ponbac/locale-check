@@ -7,7 +7,6 @@ use axum::{
     routing::{get, put},
     Router,
 };
-use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
