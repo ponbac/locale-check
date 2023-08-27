@@ -11,7 +11,7 @@
     <input
       type="search"
       name="query"
-      placeholder="Search translations..."
+      placeholder="Search translation keys..."
       hx-get="/api/translations"
       hx-trigger="keyup changed delay:100ms, search"
       hx-target="#translations-container"
@@ -19,7 +19,7 @@
     />
 
     <div id="translations-container" class="w-full">
-      {% include "../components/translations-list.html" %}
+      {% include "../components/translations-list/translations-list.html" %}
     </div>
   </div>
 {% endblock %}

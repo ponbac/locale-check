@@ -3,7 +3,6 @@
     {% for translation in en %}
       <form class="flex flex-row items-center gap-4">
         <p class="text-lg font-semibold">{{ translation.0 }}:</p>
-        <!-- <p class="text-lg italic text-slate-400">{{ translation.1 }}</p> -->
         <input
           id="en-{{ loop.index }}"
           name="value"
@@ -24,7 +23,6 @@
     {% for translation in sv %}
       <form class="flex flex-row items-center gap-4">
         <p class="text-lg font-semibold">{{ translation.0 }}:</p>
-        <!-- <p class="text-lg italic text-slate-400">{{ translation.1 }}</p> -->
         <input
           id="en-{{ loop.index }}"
           name="value"

@@ -9,8 +9,6 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::interactive::HtmlTemplate;
-
 use super::server::AppState;
 
 // Translations root page
@@ -35,7 +33,7 @@ pub async fn translations(State(state): State<Arc<AppState>>) -> impl IntoRespon
         .map(|(key, value)| (key.clone(), value.clone()))
         .collect::<Vec<(String, String)>>();
 
-    HtmlTemplate(TranslationsTemplate { en, sv })
+    TranslationsTemplate { en, sv }
 }
 
 // Translations list
@@ -45,7 +43,7 @@ pub struct TranslationsSearchQuery {
 }
 
 #[derive(Template)]
-#[template(path = "components/translations-list.html")]
+#[template(path = "components/translations-list/translations-list.html")]
 struct TranslationsList {
     en: Vec<(String, String)>,
     sv: Vec<(String, String)>,
@@ -65,11 +63,10 @@ pub async fn translations_list(
             .collect::<Vec<(String, String)>>()
     }
 
-    let en = filter_by_query(&state.en_translation_file.entries, &query);
-    let sv = filter_by_query(&state.sv_translation_file.entries, &query);
-
-    let template = TranslationsList { en, sv };
-    HtmlTemplate(template)
+    TranslationsList {
+        en: filter_by_query(&state.en_translation_file.entries, &query),
+        sv: filter_by_query(&state.sv_translation_file.entries, &query),
+    }
 }
 
 #[derive(Deserialize)]

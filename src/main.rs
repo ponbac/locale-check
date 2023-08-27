@@ -229,6 +229,10 @@ async fn main() {
     }
 
     if args.interactive {
+        println!(
+            "\n{}\n",
+            style("Starting interactive server...").blue().bold()
+        );
         let _ = interactive::run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
     }
 }
