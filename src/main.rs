@@ -212,8 +212,9 @@ fn main() {
 
         let en_file = TranslationFile::new(args.en_file).unwrap();
         let sv_file = TranslationFile::new(args.sv_file).unwrap();
-        en_file.sort_keys().unwrap();
-        sv_file.sort_keys().unwrap();
+        // simply need to write the files again, due to the way the TranslationFile struct is implemented (BTreeMap)
+        en_file.write().expect("Unable to write EN file");
+        sv_file.write().expect("Unable to write SV file");
 
         println!(
             "{}{}",
