@@ -2,6 +2,8 @@ use std::{path::Path, sync::Arc};
 
 use anyhow::{Context, Result};
 use axum::{
+    http::{HeaderMap, HeaderValue, StatusCode},
+    response::IntoResponse,
     routing::{get, put},
     Router,
 };
@@ -18,6 +20,10 @@ pub struct AppState {
     pub en_translation_file: TranslationFile,
     pub sv_translation_file: TranslationFile,
 }
+
+static HTMX_FILE: &str = include_str!("../../assets/scripts/htmx_1.9.4.js");
+static CSS_FILE: &str = include_str!("../../assets/main.css");
+static FAV_ICON: &[u8] = include_bytes!("../../assets/favicon.ico");
 
 // https://joeymckenzie.tech/blog/templates-with-rust-axum-htmx-askama/
 pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
@@ -43,17 +49,17 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         sv_translation_file,
     });
 
-    let api_router = Router::new()
-        .route("/translations", get(translations_list))
-        .route("/translations", put(edit_translation_value))
-        .with_state(app_state);
-
     let assets_path = std::env::current_dir().unwrap();
     let port = 8000_u16;
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
-        .nest("/api", api_router)
         .route("/", get(translations))
+        .route("/api/translations", get(translations_list))
+        .route("/api/translations", put(edit_translation_value))
+        .route("/assets/htmx.js", get(get_htmx_js))
+        .route("/assets/main.css", get(get_css))
+        .route("/favicon.ico", get(get_favicon))
+        .with_state(app_state)
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
@@ -70,4 +76,22 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         .context("error while starting server")?;
 
     Ok(())
+}
+
+async fn get_htmx_js() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", HeaderValue::from_static("text/javascript"));
+
+    (StatusCode::OK, headers, HTMX_FILE)
+}
+
+async fn get_css() -> impl IntoResponse {
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", HeaderValue::from_static("text/css"));
+
+    (StatusCode::OK, headers, CSS_FILE)
+}
+
+async fn get_favicon() -> impl IntoResponse {
+    FAV_ICON
 }

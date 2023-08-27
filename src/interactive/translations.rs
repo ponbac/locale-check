@@ -16,10 +16,26 @@ use super::server::AppState;
 // Translations root page
 #[derive(Template)]
 #[template(path = "pages/translations.html")]
-struct TranslationsTemplate {}
+struct TranslationsTemplate {
+    en: Vec<(String, String)>,
+    sv: Vec<(String, String)>,
+}
 
-pub async fn translations() -> impl IntoResponse {
-    HtmlTemplate(TranslationsTemplate {})
+pub async fn translations(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let en = state
+        .en_translation_file
+        .entries
+        .iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<Vec<(String, String)>>();
+    let sv = state
+        .sv_translation_file
+        .entries
+        .iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<Vec<(String, String)>>();
+
+    HtmlTemplate(TranslationsTemplate { en, sv })
 }
 
 // Translations list

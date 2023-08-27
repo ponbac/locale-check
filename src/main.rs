@@ -230,7 +230,6 @@ async fn main() {
 
     if args.interactive {
         let _ = interactive::run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
-        std::process::exit(0);
     }
 }
 

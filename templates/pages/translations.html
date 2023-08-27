@@ -18,14 +18,8 @@
       class="rounded-md border border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
     />
 
-    <div
-      id="translations-container"
-      hx-get="/api/translations"
-      hx-swap="innerHtml"
-      hx-trigger="load"
-      class="w-full"
-    >
-      TRANSLATIONS CONTAINER
+    <div id="translations-container" class="w-full">
+      {% include "../components/translations-list.html" %}
     </div>
   </div>
 {% endblock %}
