@@ -41,13 +41,7 @@ async fn main() {
     let args = Args::parse();
 
     if args.interactive {
-        // println!(
-        //     "{}",
-        //     style("Interactive mode is not implemented yet!")
-        //         .red()
-        //         .bold()
-        // );
-        let _ = run_server().await;
+        let _ = run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
         std::process::exit(0);
     }
 

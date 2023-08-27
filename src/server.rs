@@ -1,28 +1,30 @@
-use std::sync::{Arc, Mutex};
+use std::{path::Path, sync::Arc};
 
 use anyhow::{Context, Result};
 use askama::Template;
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Response},
-    routing::{get, post},
-    Form, Router,
+    routing::get,
+    Router,
 };
 use serde::Deserialize;
 use tower_http::services::ServeDir;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
+use crate::translation_file::TranslationFile;
+
 struct AppState {
-    todos: Mutex<Vec<String>>,
+    en_translation_file: TranslationFile,
+    sv_translation_file: TranslationFile,
 }
 
 // https://joeymckenzie.tech/blog/templates-with-rust-axum-htmx-askama/
-pub async fn run_server() -> Result<()> {
+pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
     // let env_filter = EnvFilter::from("info,kobo_sync=debug,tower_http=debug,axum=debug");
     // tracing_subscriber::fmt().with_env_filter(env_filter).init();
-
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -33,13 +35,18 @@ pub async fn run_server() -> Result<()> {
 
     info!("initializing router...");
 
+    let en_translation_file =
+        TranslationFile::new(en_path.to_path_buf()).expect("failed to open en translation file");
+    let sv_translation_file =
+        TranslationFile::new(sv_path.to_path_buf()).expect("failed to open sv translation file");
+
     let app_state = Arc::new(AppState {
-        todos: Mutex::new(vec![]),
+        en_translation_file,
+        sv_translation_file,
     });
 
     let api_router = Router::new()
-        .route("/hello", get(hello_from_the_server))
-        .route("/todos", post(add_todo))
+        .route("/translations", get(translations_list))
         .with_state(app_state);
 
     let assets_path = std::env::current_dir().unwrap();
@@ -47,8 +54,7 @@ pub async fn run_server() -> Result<()> {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
         .nest("/api", api_router)
-        .route("/", get(hello))
-        .route("/another-page", get(another_page))
+        .route("/", get(translations))
         .nest_service(
             "/assets",
             ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
@@ -68,49 +74,59 @@ pub async fn run_server() -> Result<()> {
 }
 
 #[derive(Template)]
-#[template(path = "components/todo-list.html")]
-struct TodoList {
-    todos: Vec<String>,
+#[template(path = "pages/translations.html")]
+struct TranslationsTemplate {}
+
+async fn translations() -> impl IntoResponse {
+    let template = TranslationsTemplate {};
+
+    HtmlTemplate(template)
+}
+
+#[derive(Template)]
+#[template(path = "components/translations-list.html")]
+struct TranslationsList {
+    en: Vec<(String, String)>,
+    sv: Vec<(String, String)>,
 }
 
 #[derive(Deserialize)]
-struct TodoRequest {
-    todo: String,
+struct TranslationsQuery {
+    query: Option<String>,
 }
 
-async fn add_todo(
+async fn translations_list(
     State(state): State<Arc<AppState>>,
-    Form(todo): Form<TodoRequest>,
+    Query(query): Query<TranslationsQuery>,
 ) -> impl IntoResponse {
-    let mut lock = state.todos.lock().unwrap();
-    lock.push(todo.todo);
+    let query = query.query.unwrap_or_default();
 
-    let template = TodoList {
-        todos: lock.clone(),
-    };
+    let mut en = state
+        .en_translation_file
+        .entries
+        .iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<Vec<(String, String)>>();
+    en.sort_by(|(a, _), (b, _)| a.cmp(b));
+    en = en
+        .into_iter()
+        .filter(|(key, _)| key.contains(&query))
+        .collect::<Vec<(String, String)>>();
 
-    HtmlTemplate(template)
-}
+    let mut sv = state
+        .sv_translation_file
+        .entries
+        .iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<Vec<(String, String)>>();
+    sv.sort_by(|(a, _), (b, _)| a.cmp(b));
+    sv = sv
+        .into_iter()
+        .filter(|(key, _)| key.contains(&query))
+        .collect::<Vec<(String, String)>>();
 
-async fn hello_from_the_server() -> &'static str {
-    "Hello from the sweaty backend!"
-}
+    let template = TranslationsList { en, sv };
 
-#[derive(Template)]
-#[template(path = "pages/hello.html")]
-struct HelloTemplate;
-
-async fn hello() -> impl IntoResponse {
-    let template = HelloTemplate {};
-    HtmlTemplate(template)
-}
-
-#[derive(Template)]
-#[template(path = "pages/another-page.html")]
-struct AnotherPageTemplate;
-
-async fn another_page() -> impl IntoResponse {
-    let template = AnotherPageTemplate {};
     HtmlTemplate(template)
 }
 

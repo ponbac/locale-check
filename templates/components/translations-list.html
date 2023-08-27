@@ -1,0 +1,19 @@
+<div class="flex flex-row justify-around gap-8">
+  <div>
+    {% for translation in en %}
+      <div class="flex flex-row gap-4">
+        <p class="text-lg font-semibold">{{ translation.0 }}:</p>
+        <p class="text-lg italic text-slate-400">{{ translation.1 }}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div>
+    {% for translation in sv %}
+      <div class="flex flex-row gap-4">
+        <p class="text-lg font-semibold">{{ translation.0 }}:</p>
+        <p class="text-lg italic text-slate-400">{{ translation.1 }}</p>
+      </div>
+    {% endfor %}
+  </div>
+</div>

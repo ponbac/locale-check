@@ -8,6 +8,7 @@ use std::{
 use serde_json::{Map, Value};
 use thiserror::Error;
 
+#[derive(Debug, Clone)]
 pub struct TranslationFile {
     pub path: PathBuf,
     pub entries: HashMap<String, String>,
