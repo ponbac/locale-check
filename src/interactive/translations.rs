@@ -11,29 +11,46 @@ use serde::Deserialize;
 
 use super::server::AppState;
 
+struct TranslationRow {
+    key: String,
+    en: String,
+    sv: String,
+}
+
 // Translations root page
 #[derive(Template)]
 #[template(path = "pages/translations.html")]
 struct TranslationsTemplate {
-    en: Vec<(String, String)>,
-    sv: Vec<(String, String)>,
+    translations: Vec<TranslationRow>,
 }
 
 pub async fn translations(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let en = state
+    fn get_translation_row(
+        key: &str,
+        en: &BTreeMap<String, String>,
+        sv: &BTreeMap<String, String>,
+    ) -> TranslationRow {
+        TranslationRow {
+            key: key.to_string(),
+            en: en.get(key).unwrap_or(&"".to_string()).to_string(),
+            sv: sv.get(key).unwrap_or(&"".to_string()).to_string(),
+        }
+    }
+
+    let rows = state
         .en_translation_file
         .entries
-        .iter()
-        .map(|(key, value)| (key.clone(), value.clone()))
-        .collect::<Vec<(String, String)>>();
-    let sv = state
-        .sv_translation_file
-        .entries
-        .iter()
-        .map(|(key, value)| (key.clone(), value.clone()))
-        .collect::<Vec<(String, String)>>();
+        .keys()
+        .map(|key| {
+            get_translation_row(
+                key,
+                &state.en_translation_file.entries,
+                &state.sv_translation_file.entries,
+            )
+        })
+        .collect::<Vec<TranslationRow>>();
 
-    TranslationsTemplate { en, sv }
+    TranslationsTemplate { translations: rows }
 }
 
 // Translations list
@@ -45,8 +62,7 @@ pub struct TranslationsSearchQuery {
 #[derive(Template)]
 #[template(path = "components/translations-list/translations-list.html")]
 struct TranslationsList {
-    en: Vec<(String, String)>,
-    sv: Vec<(String, String)>,
+    translations: Vec<TranslationRow>,
 }
 
 pub async fn translations_list(
@@ -55,17 +71,28 @@ pub async fn translations_list(
 ) -> impl IntoResponse {
     let query = query.query.unwrap_or_default().to_ascii_lowercase();
 
-    fn filter_by_query(entries: &BTreeMap<String, String>, query: &str) -> Vec<(String, String)> {
-        entries
+    fn filter_by_query(
+        en_entries: &BTreeMap<String, String>,
+        sv_entries: &BTreeMap<String, String>,
+        query: &str,
+    ) -> Vec<TranslationRow> {
+        en_entries
             .iter()
             .filter(|(key, _)| key.to_ascii_lowercase().contains(query))
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<(String, String)>>()
+            .map(|(key, _)| TranslationRow {
+                key: key.to_string(),
+                en: en_entries.get(key).unwrap_or(&"".to_string()).to_string(),
+                sv: sv_entries.get(key).unwrap_or(&"".to_string()).to_string(),
+            })
+            .collect::<Vec<TranslationRow>>()
     }
 
     TranslationsList {
-        en: filter_by_query(&state.en_translation_file.entries, &query),
-        sv: filter_by_query(&state.sv_translation_file.entries, &query),
+        translations: filter_by_query(
+            &state.en_translation_file.entries,
+            &state.sv_translation_file.entries,
+            &query,
+        ),
     }
 }
 

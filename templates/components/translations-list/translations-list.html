@@ -1,41 +1,33 @@
-<div class="flex flex-row justify-around gap-8">
-  <div class="flex flex-col gap-2">
-    {% for translation in en %}
-      <form class="flex flex-row items-center gap-4">
-        <p class="text-lg font-semibold">{{ translation.0 }}:</p>
-        <input
-          id="en-{{ loop.index }}"
-          name="value"
-          type="text"
-          value="{{ translation.1 }}"
-          class="rounded-md border border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
-          hx-put="/api/translations"
-          hx-trigger="keyup changed delay:100ms"
-          hx-swap="none"
-        />
-        <input type="hidden" name="key" value="{{ translation.0 }}" />
-        <input type="hidden" name="language" value="en" />
-      </form>
-    {% endfor %}
-  </div>
-
-  <div class="flex flex-col gap-2">
-    {% for translation in sv %}
-      <form class="flex flex-row items-center gap-4">
-        <p class="text-lg font-semibold">{{ translation.0 }}:</p>
-        <input
-          id="en-{{ loop.index }}"
-          name="value"
-          type="text"
-          value="{{ translation.1 }}"
-          class="rounded-md border border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
-          hx-put="/api/translations"
-          hx-trigger="keyup changed delay:100ms"
-          hx-swap="none"
-        />
-        <input type="hidden" name="key" value="{{ translation.0 }}" />
-        <input type="hidden" name="language" value="sv" />
-      </form>
-    {% endfor %}
-  </div>
+<div class="flex flex-col items-center gap-2">
+  {% for row in translations %}
+    <form class="flex flex-row items-center gap-4">
+      <p class="text-lg font-semibold">{{ row.key }}:</p>
+      <input
+        type="text"
+        name="value"
+        value="{{ row.en }}"
+        hx-put="/api/translations"
+        hx-vals='{
+            "key": "{{ row.key }}",
+            "language": "en"
+          }'
+        hx-trigger="keyup changed delay:100ms, blur"
+        hx-swap="none"
+        class="rounded-md border border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
+      />
+      <input
+        type="text"
+        name="value"
+        value="{{ row.sv }}"
+        hx-put="/api/translations"
+        hx-vals='{
+            "key": "{{ row.key }}",
+            "language": "sv"
+          }'
+        hx-trigger="keyup changed delay:100ms, blur"
+        hx-swap="none"
+        class="rounded-md border border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
+      />
+    </form>
+  {% endfor %}
 </div>

@@ -9,7 +9,7 @@
   "scripts": {
     "postinstall": "node ./npm/install.js",
     "format": "prettier --write --ignore-unknown .",
-    "start:server": "cargo watch -x \"run -- -i --root-dir C:\\Users\\ponbac\\Dev\\SE-CustomerPortal\\CustomerPortal --en-file C:\\Users\\ponbac\\Dev\\SE-CustomerPortal\\CustomerPortal\\shared\\translations\\en.json --sv-file C:\\Users\\ponbac\\Dev\\SE-CustomerPortal\\CustomerPortal\\shared\\translations\\sv.json --ignore-file C:\\Users\\ponbac\\Dev\\SE-CustomerPortal\\CustomerPortal\\shared\\translations\\.keyignore\"",
+    "start:server": "cargo watch -x \"run -- -i --root-dir /home/ponbac/Dev/SE-CustomerPortal/CustomerPortal --en-file /home/ponbac/Dev/SE-CustomerPortal/CustomerPortal/shared/translations/en.json --sv-file /home/ponbac/Dev/SE-CustomerPortal/CustomerPortal/shared/translations/sv.json --ignore-file /home/ponbac/Dev/SE-CustomerPortal/CustomerPortal/shared/translations/.keyignore\"",
     "start:tw": "tailwindcss -i styles/tailwind.css -o assets/main.css --watch"
   },
   "files": [
