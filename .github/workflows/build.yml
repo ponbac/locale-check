@@ -5,12 +5,12 @@ on:
     tags: ["v*.*.*"]
 
 jobs:
-  build:
+  build-win-linux:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Run tests
         run: cargo test --verbose
@@ -22,50 +22,9 @@ jobs:
           rustup target add x86_64-pc-windows-gnu
           rustup target add i686-pc-windows-gnu
           rustup target add x86_64-unknown-linux-gnu
-          # rustup target add x86_64-apple-darwin
-          # rustup target add aarch64-apple-darwin
 
           mkdir dist
           mkdir builds
-
-      # - name: Cache Mac OS dependencies
-      #   id: cache-macos
-      #   uses: actions/cache@v1
-      #   with:
-      #     path: osxcross
-      #     key: ${{ runner.os }}-osxcross
-
-      # - name: Install Mac OS dependencies
-      #   if: steps.cache-macos.outputs.cache-hit != 'true'
-      #   run: |
-      #     git clone https://github.com/tpoechtrager/osxcross
-      #     cd osxcross
-      #     sudo tools/get_dependencies.sh
-      #     wget -nc https://github.com/joseluisq/macosx-sdks/releases/download/11.3/MacOSX11.3.sdk.tar.xz
-      #     mv MacOSX11.3.sdk.tar.xz tarballs/
-      #     UNATTENDED=yes OSX_VERSION_MIN=11.3 ./build.sh
-
-      # - name: Build Mac OS
-      #   run: |
-      #     export PATH="$(pwd)/osxcross/target/bin:$PATH"
-      #     export LIBZ_SYS_STATIC=1
-
-      #     # Build for aarch64
-      #     export CC=aarch64-apple-darwin20.2-clang
-      #     export CXX=aarch64-apple-darwin20.2-clang++
-      #     cargo build --release --target "aarch64-apple-darwin"
-      #     mkdir builds/ramilang-macos-aarch64
-      #     cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
-      #     tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
-
-      #     # Build for x86_64
-      #     export CC=o64-clang
-      #     export CXX=o64-clang++
-      #     cargo build --release --target "x86_64-apple-darwin"
-      #     mkdir builds/ramilang-macos
-      #     cp target/x86_64-apple-darwin/release/ramilang builds/ramilang-macos
-      #     tar -C builds -czvf dist/ramilang-macos.tar.gz ramilang-macos
-
 
       - name: Build Win64
         run: |
@@ -96,14 +55,57 @@ jobs:
             dist/ramilang-win64.tar.gz
             dist/ramilang-win32.tar.gz
             dist/ramilang-linux.tar.gz
-            # dist/ramilang-macos-x86_64.tar.gz
-            # dist/ramilang-macos-aarch64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish npm package
-        env:
-          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ".npmrc"
-          npm publish
+  build-mac:
+      runs-on: macos-latest
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+
+        - name: Install dependencies
+          run: |
+            rustup target add x86_64-apple-darwin
+            rustup target add aarch64-apple-darwin
+
+            mkdir dist
+            mkdir builds
+
+        - name: Build
+          run: |
+            cargo build --release --target x86_64-apple-darwin
+            mkdir builds/ramilang-macos-x86_64
+            cp target/x86_64-apple-darwin/release/ramilang builds/ramilang-macos-x86_64
+            tar -C builds -czvf dist/ramilang-macos-x86_64.tar.gz ramilang-macos-x86_64
+
+            cargo build --release --target aarch64-apple-darwin
+            mkdir builds/ramilang-macos-aarch64
+            cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
+            tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
+          
+        - name: Upload release
+          uses: softprops/action-gh-release@v1
+          with:
+            body_path: CHANGELOG.md
+            files: |
+              dist/ramilang-macos-x86_64.tar.gz
+              dist/ramilang-macos-aarch64.tar.gz
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+  npm-publish:
+      needs: [build-win-linux, build-mac]
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+        
+        - name: Publish npm package
+          env:
+            NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          run: |
+            echo "//registry.npmjs.org/:_authToken=$NPM_ACCESS_TOKEN" > ".npmrc"
+            npm publish 
