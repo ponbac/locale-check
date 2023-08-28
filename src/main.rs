@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use console::style;
 use ramilang::{
+    interactive,
     translation_file::{TranslationFile, TranslationFileError},
     ts_file::{KeyUsage, TSFile},
 };
@@ -22,17 +23,21 @@ struct Args {
     #[arg(short, long)]
     sv_file: PathBuf,
     /// Path to key ignore unused file
-    #[arg(short, long)]
+    #[arg(long)]
     ignore_file: Option<PathBuf>,
     /// Sort keys in translation files
     #[arg(long, action)]
     sort: bool,
+    /// Interactive mode
+    #[arg(long, short, action)]
+    interactive: bool,
 }
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 
 // clear; cargo run -- --sort --root-dir C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\ --en-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\en.json --sv-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\sv.json --ignore-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\.keyignore
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::parse();
 
     // Try to open the translation files
@@ -203,24 +208,32 @@ fn main() {
         style(": great translations!").bold()
     );
 
-    // Sort the translation files if requested
+    // Sort the translation files if requested (should maybe always be done?)
     if args.sort {
         println!(
             "\n{}\n",
             style("Sorting translation files...").blue().bold()
         );
 
-        let en_file = TranslationFile::new(args.en_file).unwrap();
-        let sv_file = TranslationFile::new(args.sv_file).unwrap();
-        // simply need to write the files again, due to the way the TranslationFile struct is implemented (BTreeMap)
+        let en_file = TranslationFile::new(args.en_file.clone()).unwrap();
+        let sv_file = TranslationFile::new(args.sv_file.clone()).unwrap();
+        // The translation files are sorted by default (BTreeMap), so we just need to write them back
         en_file.write().expect("Unable to write EN file");
-        sv_file.write().expect("Unable to write SV file");
+        sv_file.write().expect("Unable to sort SV file");
 
         println!(
             "{}{}",
             style("SUCCESS").green().bold(),
             style(": translation files sorted!").bold()
         );
+    }
+
+    if args.interactive {
+        println!(
+            "\n{}\n",
+            style("Starting interactive server...").blue().bold()
+        );
+        let _ = interactive::run_server(args.en_file.as_path(), args.sv_file.as_path()).await;
     }
 }
 

@@ -7,6 +7,7 @@ use std::{
 
 use thiserror::Error;
 
+#[derive(Debug, Clone)]
 pub struct TranslationFile {
     pub path: PathBuf,
     pub entries: BTreeMap<String, String>,
@@ -55,9 +56,9 @@ impl TranslationFile {
     }
 
     pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let json = serde_json::to_string_pretty(&self.entries)?;
         let mut file = File::create(&self.path)?;
-        let content = serde_json::to_string_pretty(&self.entries)?;
-        file.write_all(content.as_bytes())?;
+        file.write_all(json.as_bytes())?;
         Ok(())
     }
 

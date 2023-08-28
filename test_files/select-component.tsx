@@ -71,7 +71,7 @@ const CO2ProductModal = (props: {
   };
 
   const onMutationError = (
-    error: AxiosError<SharedResultsAndErrorsIError[]>
+    error: AxiosError<SharedResultsAndErrorsIError[]>,
   ) => {
     toast({
       title: intl.formatMessage({

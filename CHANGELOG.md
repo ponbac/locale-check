@@ -1,3 +1,3 @@
 # Improvements
 
-- Fix non-valid usages detected!
+- ARM64 Mac support! 
