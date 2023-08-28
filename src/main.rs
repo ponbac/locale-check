@@ -208,7 +208,7 @@ async fn main() {
         style(": great translations!").bold()
     );
 
-    // Sort the translation files if requested
+    // Sort the translation files if requested (should maybe always be done?)
     if args.sort {
         println!(
             "\n{}\n",
