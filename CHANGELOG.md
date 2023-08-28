@@ -1,3 +1,3 @@
 # Improvements
 
-- Some stylinh!
+- ARM64 Mac support! 
