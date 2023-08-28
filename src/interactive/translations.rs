@@ -65,7 +65,7 @@ struct TranslationsList {
     translations: Vec<TranslationRow>,
 }
 
-pub async fn translations_list(
+pub async fn search_translations_keys(
     State(state): State<Arc<AppState>>,
     Query(query): Query<TranslationsSearchQuery>,
 ) -> impl IntoResponse {
@@ -85,6 +85,40 @@ pub async fn translations_list(
                 sv: sv_entries.get(key).unwrap_or(&"".to_string()).to_string(),
             })
             .collect::<Vec<TranslationRow>>()
+    }
+
+    TranslationsList {
+        translations: filter_by_query(
+            &state.en_translation_file.entries,
+            &state.sv_translation_file.entries,
+            &query,
+        ),
+    }
+}
+
+pub async fn search_translations_values(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<TranslationsSearchQuery>,
+) -> impl IntoResponse {
+    let query = query.query.unwrap_or_default().to_ascii_lowercase();
+
+    fn filter_by_query(
+        en_entries: &BTreeMap<String, String>,
+        sv_entries: &BTreeMap<String, String>,
+        query: &str,
+    ) -> Vec<TranslationRow> {
+        let combined_rows_iter = en_entries.iter().map(|(key, value)| TranslationRow {
+            key: key.to_string(),
+            en: value.to_string(),
+            sv: sv_entries.get(key).unwrap_or(&"".to_string()).to_string(),
+        });
+
+        combined_rows_iter
+            .filter(|row| {
+                row.en.to_ascii_lowercase().contains(query)
+                    || row.sv.to_ascii_lowercase().contains(query)
+            })
+            .collect()
     }
 
     TranslationsList {

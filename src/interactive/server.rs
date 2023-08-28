@@ -11,7 +11,9 @@ use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    interactive::translations::{edit_translation_value, translations, translations_list},
+    interactive::translations::{
+        edit_translation_value, search_translations_keys, search_translations_values, translations,
+    },
     translation_file::TranslationFile,
 };
 
@@ -52,7 +54,8 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let router = Router::new()
         .route("/", get(translations))
-        .route("/api/translations", get(translations_list))
+        .route("/api/search-keys", get(search_translations_keys))
+        .route("/api/search-values", get(search_translations_values))
         .route("/api/translations", put(edit_translation_value))
         .route("/assets/htmx.js", get(get_htmx_js))
         .route("/assets/main.css", get(get_css))
