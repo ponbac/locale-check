@@ -3,8 +3,8 @@ name: build-mac
 
 on:
   push:
-    branches: [ htmx-ting ]
-    # tags: ["v*.*.*"]
+    # branches: [ htmx-ting ]
+    tags: ["v*.*.*"]
 
 jobs:
   build:
@@ -33,23 +33,32 @@ jobs:
           mkdir builds/ramilang-macos-aarch64
           cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
           tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
-
+        
       - name: Upload x86_64
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-            upload_url: ${{ github.event.release.upload_url }}
-            asset_path: dist/ramilang-macos-x86_64.tar.gz 
-            asset_name: ramilang-macos-x86_64.tar.gz
-            asset_content_type: application/gzip
+          body_path: CHANGELOG.md
+          files: |
+            dist/ramilang-macos-x86_64.tar.gz
+            dist/ramilang-macos-aarch64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload x86_64
+      #   uses: actions/upload-release-asset@v1.0.1
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #       upload_url: ${{ github.event.release.upload_url }}
+      #       asset_path: dist/ramilang-macos-x86_64.tar.gz 
+      #       asset_name: ramilang-macos-x86_64.tar.gz
+      #       asset_content_type: application/gzip
 
-      - name: Upload aarch64
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-            upload_url: ${{ github.event.release.upload_url }}
-            asset_path: dist/ramilang-macos-aarch64.tar.gz 
-            asset_name: ramilang-macos-aarch64.tar.gz
-            asset_content_type: application/gzip
+      # - name: Upload aarch64
+      #   uses: actions/upload-release-asset@v1.0.1
+      #   env:
+      #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #       upload_url: ${{ github.event.release.upload_url }}
+      #       asset_path: dist/ramilang-macos-aarch64.tar.gz 
+      #       asset_name: ramilang-macos-aarch64.tar.gz
+      #       asset_content_type: application/gzip
