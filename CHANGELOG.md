@@ -1,3 +1,3 @@
 # Improvements
 
-- ARM64 Mac support! 
+- Can now search values!
