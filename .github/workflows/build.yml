@@ -28,27 +28,6 @@ jobs:
           mkdir dist
           mkdir builds
 
-      - name: Build Win64
-        run: |
-          cargo rustc --bin ramilang --release --target=x86_64-pc-windows-gnu -- -C linker=x86_64-w64-mingw32-gcc
-          mkdir builds/ramilang-win64
-          cp target/x86_64-pc-windows-gnu/release/ramilang.exe builds/ramilang-win64
-          tar -C builds -czvf dist/ramilang-win64.tar.gz ramilang-win64
-
-      - name: Build Win32
-        run: |
-          cargo rustc --bin ramilang --release --target=i686-pc-windows-gnu -- -C linker=i686-w64-mingw32-gcc -C link-args=-mwindows -C panic=abort
-          mkdir builds/ramilang-win32
-          cp target/i686-pc-windows-gnu/release/ramilang.exe builds/ramilang-win32
-          tar -C builds -czvf dist/ramilang-win32.tar.gz ramilang-win32
-
-      - name: Build Linux
-        run: |
-          cargo rustc --bin ramilang --release --target=x86_64-unknown-linux-gnu
-          mkdir builds/ramilang-linux
-          cp target/x86_64-unknown-linux-gnu/release/ramilang builds/ramilang-linux
-          tar -C builds -czvf dist/ramilang-linux.tar.gz ramilang-linux
-
       - name: Cache Mac OS dependencies
         id: cache-macos
         uses: actions/cache@v1
@@ -62,9 +41,9 @@ jobs:
           git clone https://github.com/tpoechtrager/osxcross
           cd osxcross
           sudo tools/get_dependencies.sh
-          wget -nc https://s3.dockerproject.org/darwin/v2/MacOSX10.10.sdk.tar.xz
-          mv MacOSX10.10.sdk.tar.xz tarballs/
-          UNATTENDED=yes OSX_VERSION_MIN=10.7 ./build.sh
+          wget -nc https://github.com/joseluisq/macosx-sdks/releases/download/11.3/MacOSX11.3.sdk.tar.xz
+          mv MacOSX11.3.sdk.tar.xz tarballs/
+          UNATTENDED=yes OSX_VERSION_MIN=11.3 ./build.sh
 
       - name: Build Mac OS
         run: |
@@ -86,6 +65,27 @@ jobs:
           mkdir builds/ramilang-macos-aarch64
           cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
           tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
+
+      - name: Build Win64
+        run: |
+          cargo rustc --bin ramilang --release --target=x86_64-pc-windows-gnu -- -C linker=x86_64-w64-mingw32-gcc
+          mkdir builds/ramilang-win64
+          cp target/x86_64-pc-windows-gnu/release/ramilang.exe builds/ramilang-win64
+          tar -C builds -czvf dist/ramilang-win64.tar.gz ramilang-win64
+
+      - name: Build Win32
+        run: |
+          cargo rustc --bin ramilang --release --target=i686-pc-windows-gnu -- -C linker=i686-w64-mingw32-gcc -C link-args=-mwindows -C panic=abort
+          mkdir builds/ramilang-win32
+          cp target/i686-pc-windows-gnu/release/ramilang.exe builds/ramilang-win32
+          tar -C builds -czvf dist/ramilang-win32.tar.gz ramilang-win32
+
+      - name: Build Linux
+        run: |
+          cargo rustc --bin ramilang --release --target=x86_64-unknown-linux-gnu
+          mkdir builds/ramilang-linux
+          cp target/x86_64-unknown-linux-gnu/release/ramilang builds/ramilang-linux
+          tar -C builds -czvf dist/ramilang-linux.tar.gz ramilang-linux
 
       - name: Upload release
         uses: softprops/action-gh-release@v1
