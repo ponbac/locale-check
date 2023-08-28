@@ -50,6 +50,14 @@ jobs:
           export PATH="$(pwd)/osxcross/target/bin:$PATH"
           export LIBZ_SYS_STATIC=1
 
+          # Build for aarch64
+          export CC=aarch64-apple-darwin20.2-clang
+          export CXX=aarch64-apple-darwin20.2-clang++
+          cargo build --release --target "aarch64-apple-darwin"
+          mkdir builds/ramilang-macos-aarch64
+          cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
+          tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
+
           # Build for x86_64
           export CC=o64-clang
           export CXX=o64-clang++
@@ -58,13 +66,6 @@ jobs:
           cp target/x86_64-apple-darwin/release/ramilang builds/ramilang-macos
           tar -C builds -czvf dist/ramilang-macos.tar.gz ramilang-macos
 
-          # Build for aarch64
-          export CC=aarch64-apple-darwin20.2-clang
-          export CXX=aarch64-apple-darwin20.2-clang++
-          cargo build --release --target "aarch64-apple-darwin"
-          mkdir builds/ramilang-macos-aarch64
-          cp target/aarch64-apple-darwin/release/ramilang builds/ramilang-macos-aarch64
-          tar -C builds -czvf dist/ramilang-macos-aarch64.tar.gz ramilang-macos-aarch64
 
       - name: Build Win64
         run: |
