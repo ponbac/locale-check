@@ -1,0 +1,37 @@
+<form
+  id="add-translation-form"
+  class="my-2 flex flex-col items-center gap-2 rounded-lg bg-slate-600 p-4"
+  hx-post="/api/translations"
+  hx-target="#translations-container"
+>
+  <h2 class="text-2xl">Add new translation</h2>
+  <div class="flex flex-col gap-2">
+    <input
+      type="text"
+      id="key"
+      name="key"
+      placeholder="Key"
+      class="w-80 rounded-md border-2 border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
+    />
+    <input
+      type="text"
+      id="en"
+      name="en"
+      placeholder="English"
+      class="w-80 rounded-md border-2 border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
+    />
+    <input
+      type="text"
+      id="sv"
+      name="sv"
+      placeholder="Swedish"
+      class="w-80 rounded-md border-2 border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
+    />
+  </div>
+  <button
+    type="submit"
+    class="rounded-md bg-slate-800 px-6 py-2 transition-colors hover:bg-slate-900"
+  >
+    Add
+  </button>
+</form>

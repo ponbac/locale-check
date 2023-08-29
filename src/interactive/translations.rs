@@ -187,14 +187,23 @@ pub async fn insert_translation(
         .write()
         .expect("failed to write en translation file");
 
-    sv_translation_file.entries.insert(query.key, query.sv);
+    sv_translation_file
+        .entries
+        .insert(query.key.clone(), query.sv.clone());
     sv_translation_file
         .write()
         .expect("failed to write sv translation file");
 
-    let new_translations = en_translation_file
+    let new_translation_row = TranslationRow {
+        key: query.key,
+        en: query.en,
+        sv: query.sv,
+    };
+
+    let mut translations = en_translation_file
         .entries
         .keys()
+        .filter(|key| key != &&new_translation_row.key)
         .map(|key| TranslationRow {
             key: key.to_string(),
             en: en_translation_file
@@ -210,7 +219,7 @@ pub async fn insert_translation(
         })
         .collect::<Vec<TranslationRow>>();
 
-    TranslationsList {
-        translations: new_translations,
-    }
+    translations.insert(0, new_translation_row);
+
+    TranslationsList { translations }
 }

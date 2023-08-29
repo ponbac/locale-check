@@ -1,3 +1,3 @@
 # Improvements
 
-- Prettier output!
+- Add translation feature!
