@@ -11,19 +11,26 @@ Command-line interface (CLI) tool to handle and validate translations in `RamiCu
 - **Check Unused Keys:** Detects keys that are not being used in the codebase (`ts` and `tsx` files).
 - **Detect Usage of Invalid Keys:** Detects usage of keys that does not exist (`ts` and `tsx` files).
 - **Custom Ignore List:** Ability to ignore certain keys from the unused keys check. Useful for keys that are used in a non-standard way, making static analysis hard.
+- **Visual Edit Mode:** Edit the translations from your browser.
 
 ## Usage from customer portal `turborepo` root
 
 ### Run checks, ignoring unused entries present in `.keyignore`
 
 ```bash
-pnpm check-translations
+pnpm translations
 ```
 
 ### Run checks, ignoring unused entries present in `.keyignore` and sort keys alphabetically
 
 ```bash
-pnpm check-translations:sort
+pnpm translations:sort
+```
+
+### Visual edit mode
+
+```bash
+pnpm translations:edit
 ```
 
 ## Manual usage with pnpm
@@ -53,3 +60,4 @@ pnpx ramilang@latest --sort --en-file ./shared/translations/en.json --sv-file ./
 - `--root-dir`: Root directory to search from (default is current directory).
 - `--ignore-file`: Path to file with line separated translation keys to exclude from unused check.
 - `--sort`: Sort keys alphabetically in translation files.
+- `-i`: Interactive mode, or edit mode.
