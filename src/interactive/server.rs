@@ -4,15 +4,16 @@ use anyhow::{Context, Result};
 use axum::{
     http::{HeaderMap, HeaderValue, StatusCode},
     response::IntoResponse,
-    routing::{get, put},
+    routing::{get, post, put},
     Router,
 };
-use tracing::info;
+use console::style;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     interactive::translations::{
-        edit_translation_value, search_translations_keys, search_translations_values, translations,
+        edit_translation_value, insert_translation, search_translations_keys,
+        search_translations_values, translations,
     },
     translation_file::TranslationFile,
 };
@@ -38,8 +39,6 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    info!("initializing router...");
-
     let en_translation_file =
         TranslationFile::new(en_path.to_path_buf()).expect("failed to open en translation file");
     let sv_translation_file =
@@ -57,14 +56,24 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         .route("/api/search-keys", get(search_translations_keys))
         .route("/api/search-values", get(search_translations_values))
         .route("/api/translations", put(edit_translation_value))
+        .route("/api/translations", post(insert_translation))
         .route("/assets/htmx.js", get(get_htmx_js))
         .route("/assets/main.css", get(get_css))
         .route("/favicon.ico", get(get_favicon))
         .with_state(app_state);
 
-    info!(
-        "router initialized, now listening on http://localhost:{}",
-        port
+    //clear console
+    print!("\x1B[2J\x1B[1;1H");
+
+    println!("{}", style("Server is now running!").green().bold());
+    println!(
+        "🚀 {}{} 🚀",
+        style("Started at ").green().italic(),
+        style(format!("http://localhost:{}", port))
+            .yellow()
+            .bold()
+            .italic()
+            .underlined()
     );
 
     // open browser if release build

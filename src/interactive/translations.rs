@@ -161,3 +161,56 @@ pub async fn edit_translation_value(
 
     (StatusCode::OK, "ok")
 }
+
+#[derive(Deserialize)]
+pub struct TranslationInsert {
+    key: String,
+    en: String,
+    sv: String,
+}
+
+pub async fn insert_translation(
+    State(state): State<Arc<AppState>>,
+    Form(query): Form<TranslationInsert>,
+) -> impl IntoResponse {
+    let mut en_translation_file = state.en_translation_file.clone();
+    let mut sv_translation_file = state.sv_translation_file.clone();
+
+    // if en_translation_file.entries.get(&query.key).is_some() {
+    //     return (StatusCode::BAD_REQUEST, "key already exists");
+    // }
+
+    en_translation_file
+        .entries
+        .insert(query.key.clone(), query.en.clone());
+    en_translation_file
+        .write()
+        .expect("failed to write en translation file");
+
+    sv_translation_file.entries.insert(query.key, query.sv);
+    sv_translation_file
+        .write()
+        .expect("failed to write sv translation file");
+
+    let new_translations = en_translation_file
+        .entries
+        .keys()
+        .map(|key| TranslationRow {
+            key: key.to_string(),
+            en: en_translation_file
+                .entries
+                .get(key)
+                .unwrap_or(&"".to_string())
+                .to_string(),
+            sv: sv_translation_file
+                .entries
+                .get(key)
+                .unwrap_or(&"".to_string())
+                .to_string(),
+        })
+        .collect::<Vec<TranslationRow>>();
+
+    TranslationsList {
+        translations: new_translations,
+    }
+}
