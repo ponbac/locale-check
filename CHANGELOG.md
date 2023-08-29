@@ -1,3 +1,3 @@
 # Improvements
 
-- Can now search values!
+- Now clears the other search field when one is being used!
