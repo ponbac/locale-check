@@ -1,3 +1,3 @@
 # Improvements
 
-- Now clears the other search field when one is being used!
+- Start on random port if port is not specified!
