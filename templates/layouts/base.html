@@ -23,4 +23,7 @@
       {% block content %}{% endblock %}
     </div>
   </body>
+
+  <!-- Allow any inheriting page to extend body with additional scripts -->
+  {% block scripts %}{% endblock %}
 </html>
