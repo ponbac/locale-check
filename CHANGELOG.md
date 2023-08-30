@@ -1,3 +1,3 @@
 # Improvements
 
-- Add translation feature!
+- Fix concurrency issue when writing and editing translations!

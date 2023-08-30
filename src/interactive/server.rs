@@ -1,4 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use anyhow::{Context, Result};
 use axum::{
@@ -19,8 +22,8 @@ use crate::{
 };
 
 pub struct AppState {
-    pub en_translation_file: TranslationFile,
-    pub sv_translation_file: TranslationFile,
+    pub en_translation_file: Mutex<TranslationFile>,
+    pub sv_translation_file: Mutex<TranslationFile>,
 }
 
 static HTMX_FILE: &str = include_str!("../../assets/scripts/htmx_1.9.4.js");
@@ -45,8 +48,8 @@ pub async fn run_server(en_path: &Path, sv_path: &Path) -> Result<()> {
         TranslationFile::new(sv_path.to_path_buf()).expect("failed to open sv translation file");
 
     let app_state = Arc::new(AppState {
-        en_translation_file,
-        sv_translation_file,
+        en_translation_file: Mutex::new(en_translation_file),
+        sv_translation_file: Mutex::new(sv_translation_file),
     });
 
     let port = 3333_u16;

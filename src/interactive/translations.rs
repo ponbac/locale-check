@@ -37,17 +37,13 @@ pub async fn translations(State(state): State<Arc<AppState>>) -> impl IntoRespon
         }
     }
 
-    let rows = state
-        .en_translation_file
+    let en_file = state.en_translation_file.lock().unwrap();
+    let sv_file = state.sv_translation_file.lock().unwrap();
+
+    let rows = en_file
         .entries
         .keys()
-        .map(|key| {
-            get_translation_row(
-                key,
-                &state.en_translation_file.entries,
-                &state.sv_translation_file.entries,
-            )
-        })
+        .map(|key| get_translation_row(key, &en_file.entries, &sv_file.entries))
         .collect::<Vec<TranslationRow>>();
 
     TranslationsTemplate { translations: rows }
@@ -87,12 +83,11 @@ pub async fn search_translations_keys(
             .collect::<Vec<TranslationRow>>()
     }
 
+    let en_file = state.en_translation_file.lock().unwrap();
+    let sv_file = state.sv_translation_file.lock().unwrap();
+
     TranslationsList {
-        translations: filter_by_query(
-            &state.en_translation_file.entries,
-            &state.sv_translation_file.entries,
-            &query,
-        ),
+        translations: filter_by_query(&en_file.entries, &sv_file.entries, &query),
     }
 }
 
@@ -121,12 +116,11 @@ pub async fn search_translations_values(
             .collect()
     }
 
+    let en_file = state.en_translation_file.lock().unwrap();
+    let sv_file = state.sv_translation_file.lock().unwrap();
+
     TranslationsList {
-        translations: filter_by_query(
-            &state.en_translation_file.entries,
-            &state.sv_translation_file.entries,
-            &query,
-        ),
+        translations: filter_by_query(&en_file.entries, &sv_file.entries, &query),
     }
 }
 
@@ -141,18 +135,19 @@ pub async fn edit_translation_value(
     State(state): State<Arc<AppState>>,
     Form(query): Form<TranslationValueEdit>,
 ) -> impl IntoResponse {
+    let mut en_file = state.en_translation_file.lock().unwrap();
+    let mut sv_file = state.sv_translation_file.lock().unwrap();
+
     match query.language.as_str() {
         "en" => {
-            let mut en_translation_file = state.en_translation_file.clone();
-            en_translation_file.entries.insert(query.key, query.value);
-            en_translation_file
+            en_file.entries.insert(query.key, query.value);
+            en_file
                 .write()
                 .expect("failed to write en translation file");
         }
         "sv" => {
-            let mut sv_translation_file = state.sv_translation_file.clone();
-            sv_translation_file.entries.insert(query.key, query.value);
-            sv_translation_file
+            sv_file.entries.insert(query.key, query.value);
+            sv_file
                 .write()
                 .expect("failed to write sv translation file");
         }
@@ -173,8 +168,8 @@ pub async fn insert_translation(
     State(state): State<Arc<AppState>>,
     Form(query): Form<TranslationInsert>,
 ) -> impl IntoResponse {
-    let mut en_translation_file = state.en_translation_file.clone();
-    let mut sv_translation_file = state.sv_translation_file.clone();
+    let mut en_translation_file = state.en_translation_file.lock().unwrap();
+    let mut sv_translation_file = state.sv_translation_file.lock().unwrap();
 
     // if en_translation_file.entries.get(&query.key).is_some() {
     //     return (StatusCode::BAD_REQUEST, "key already exists");
