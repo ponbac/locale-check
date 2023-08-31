@@ -1,3 +1,3 @@
 # Improvements
 
-- Fix concurrency issue when writing and editing translations!
+- Remove colon from key in translations list!

@@ -55,6 +55,8 @@
     const formElement = document.getElementById("add-translation-form");
     formElement.addEventListener("htmx:afterRequest", (event) => {
       formElement.reset();
+      searchKeys.value = "";
+      searchValues.value = "";
     });
   </script>
 {% endblock %}
