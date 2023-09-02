@@ -10,7 +10,7 @@
           hx-vals='{"key": "{{ row.key }}"}'
           hx-confirm="Are you sure you want to delete this translation?"
           hx-target="closest li"
-          hx-swap="delete"
+          hx-swap="delete transition:true"
         >
           {% include "./icons/delete.html" %}
         </button>

@@ -19,6 +19,7 @@
       hx-get="/api/search-keys"
       hx-trigger="keyup changed delay:100ms, search"
       hx-target="#translations-container"
+      hx-swap="innerHTML transition:true"
       class="w-80 rounded-md border-2 border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
     />
     <input
@@ -29,6 +30,7 @@
       hx-get="/api/search-values"
       hx-trigger="keyup changed delay:100ms, search"
       hx-target="#translations-container"
+      hx-swap="innerHTML transition:true"
       class="w-80 rounded-md border-2 border-slate-400 p-2 text-slate-700 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400"
     />
 
