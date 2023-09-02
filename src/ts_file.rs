@@ -57,6 +57,7 @@ impl TSFile {
     fn find_usages(&mut self, opening_tag: &str, id_tag: &str) -> Vec<KeyUsage> {
         let mut results = Vec::new();
         let mut found_opening = false;
+        let mut found_ternary = false;
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
                 if line.contains(opening_tag) {
@@ -70,9 +71,30 @@ impl TSFile {
                             line: line_number + 1,
                             file_path: self.path.to_path_buf(),
                         });
+                        found_ternary = false;
+                        found_opening = false;
+                    } else if line.contains('?') {
+                        if let Ok((_, key)) = extract_quoted_string(&line) {
+                            results.push(KeyUsage {
+                                key,
+                                line: line_number + 1,
+                                file_path: self.path.to_path_buf(),
+                            });
+                        }
+                        found_ternary = true;
+                    } else if found_ternary && line.contains(':') {
+                        if let Ok((_, key)) = extract_quoted_string(&line) {
+                            results.push(KeyUsage {
+                                key,
+                                line: line_number + 1,
+                                file_path: self.path.to_path_buf(),
+                            });
+                        }
+                        found_ternary = false;
                         found_opening = false;
                     } else if line.contains("/>") {
                         // TODO: think about edge cases where this might not be true!
+                        found_ternary = false;
                         found_opening = false;
                     }
                 }
@@ -110,6 +132,13 @@ fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
     let (input, _) = take_until(id_tag)(input)?;
     let (input, _) = tag(id_tag)(input)?;
 
+    let (input, _) = take_until("\"")(input)?;
+    let (input, id) = fenced("\"", "\"")(input)?;
+
+    Ok((input, id.to_string()))
+}
+
+fn extract_quoted_string(input: &str) -> IResult<&str, String> {
     let (input, _) = take_until("\"")(input)?;
     let (input, id) = fenced("\"", "\"")(input)?;
 

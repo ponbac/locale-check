@@ -1,3 +1,4 @@
 # Improvements
 
-- Remove colon from key in translations list!
+- Supports ternaries!
+- You can now remove keys from the UI!

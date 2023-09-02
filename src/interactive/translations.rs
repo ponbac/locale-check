@@ -218,3 +218,50 @@ pub async fn insert_translation(
 
     TranslationsList { translations }
 }
+
+#[derive(Deserialize)]
+pub struct TranslationDelete {
+    key: String,
+}
+
+#[derive(Template)]
+#[template(path = "icons/delete.html")]
+struct DeleteIcon;
+
+pub async fn delete_translation(
+    State(state): State<Arc<AppState>>,
+    Form(query): Form<TranslationDelete>,
+) -> impl IntoResponse {
+    let mut en_translation_file = state.en_translation_file.lock().unwrap();
+    let mut sv_translation_file = state.sv_translation_file.lock().unwrap();
+
+    en_translation_file.entries.remove(&query.key);
+    en_translation_file
+        .write()
+        .expect("failed to write en translation file");
+
+    sv_translation_file.entries.remove(&query.key);
+    sv_translation_file
+        .write()
+        .expect("failed to write sv translation file");
+
+    let translations = en_translation_file
+        .entries
+        .keys()
+        .map(|key| TranslationRow {
+            key: key.to_string(),
+            en: en_translation_file
+                .entries
+                .get(key)
+                .unwrap_or(&"".to_string())
+                .to_string(),
+            sv: sv_translation_file
+                .entries
+                .get(key)
+                .unwrap_or(&"".to_string())
+                .to_string(),
+        })
+        .collect::<Vec<TranslationRow>>();
+
+    TranslationsList { translations }
+}
