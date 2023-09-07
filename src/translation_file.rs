@@ -31,8 +31,8 @@ impl TranslationFile {
         }
 
         let file = std::fs::File::open(&path).expect("Unable to open file");
-        let reader = std::io::BufReader::new(file);
-        let entries = serde_json::from_reader(reader).unwrap();
+        let entries = serde_json::from_reader(file).expect("Unable to parse json");
+
         Ok(Self { path, entries })
     }
 
@@ -82,8 +82,8 @@ impl TranslationFile {
     }
 }
 
-fn find_key_duplicates(json_reader: &PathBuf) -> Vec<String> {
-    let json_reader = File::open(json_reader).expect("Unable to open file");
+fn find_key_duplicates(json_path: &PathBuf) -> Vec<String> {
+    let json_reader = File::open(json_path).expect("Unable to open file");
     let lines = BufReader::new(json_reader).lines();
 
     let mut set = std::collections::HashSet::new();
