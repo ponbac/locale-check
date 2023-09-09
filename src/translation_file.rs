@@ -5,6 +5,7 @@ use std::{
     path::PathBuf,
 };
 
+use anyhow::Result;
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
@@ -55,11 +56,11 @@ impl TranslationFile {
         }
     }
 
-    pub fn write(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let json = serde_json::to_string_pretty(&self.entries)?;
+    pub fn write(&self) -> Result<()> {
+        let serialized_entries = serde_json::to_string_pretty(&self.entries)?;
+
         let mut file = File::create(&self.path)?;
-        file.write_all(json.as_bytes())?;
-        Ok(())
+        Ok(file.write_all(serialized_entries.as_bytes())?)
     }
 
     fn check_rules(&self, other: &Self) -> Vec<TranslationFileError> {
