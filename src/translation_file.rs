@@ -49,11 +49,11 @@ impl TranslationFile {
         let self_errors = self.check_rules(other);
         let other_errors = other.check_rules(self);
 
-        if self_errors.is_empty() && other_errors.is_empty() {
-            Ok(())
-        } else {
-            Err((self_errors, other_errors))
+        if !self_errors.is_empty() || !other_errors.is_empty() {
+            return Err((self_errors, other_errors));
         }
+
+        Ok(())
     }
 
     pub fn write(&self) -> Result<()> {
