@@ -99,23 +99,20 @@ async fn main() {
         .filter_map(|e| e.ok());
 
     let mut key_usages: Vec<KeyUsage> = Vec::new();
-    for entry in walker {
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
-                    let mut ts_file = TSFile::new(path);
+    for file in walker.filter(|e| e.path().is_file()) {
+        if let Some(ext) = file.path().extension() {
+            if EXTENSIONS_TO_SEARCH.contains(&ext.to_str().unwrap()) {
+                let mut ts_file = TSFile::new(file.path());
 
-                    // Collect KeyUsage from different methods
-                    let formatted_message_keys = ts_file.find_formatted_message_usages();
-                    let format_message_keys = ts_file.find_format_message_usages();
-                    let misc_usages = ts_file.find_misc_usages();
+                // Collect KeyUsage from different methods
+                let formatted_message_keys = ts_file.find_formatted_message_usages();
+                let format_message_keys = ts_file.find_format_message_usages();
+                let misc_usages = ts_file.find_misc_usages();
 
-                    // Extend the used_keys vector with the KeyUsages
-                    key_usages.extend(format_message_keys);
-                    key_usages.extend(formatted_message_keys);
-                    key_usages.extend(misc_usages);
-                }
+                // Extend the used_keys vector with the KeyUsages
+                key_usages.extend(format_message_keys);
+                key_usages.extend(formatted_message_keys);
+                key_usages.extend(misc_usages);
             }
         }
     }
