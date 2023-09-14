@@ -26,7 +26,7 @@ jobs:
           mkdir dist
           mkdir builds
 
-      - name: Cache dependencies
+      - name: Cached dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Build Win64
@@ -76,7 +76,7 @@ jobs:
           mkdir dist
           mkdir builds
 
-      - name: Cache dependencies
+      - name: Cached dependencies
         uses: Swatinem/rust-cache@v2
 
       - name: Build x86_64
