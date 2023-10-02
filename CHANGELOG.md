@@ -1,3 +1,3 @@
 # Improvements
 
-- Insane improvements!
+- Fixed bug with not treating "</" as a closing tag
