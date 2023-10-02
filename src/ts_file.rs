@@ -92,7 +92,7 @@ impl TSFile {
                         }
                         found_ternary = false;
                         found_opening = false;
-                    } else if line.contains("/>") {
+                    } else if line.contains("/>") || line.contains("</") {
                         // TODO: think about edge cases where this might not be true!
                         found_ternary = false;
                         found_opening = false;
