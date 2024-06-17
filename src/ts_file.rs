@@ -1,5 +1,7 @@
 use nom::{
+    branch::alt,
     bytes::complete::{tag, take_until},
+    sequence::delimited,
     IResult,
 };
 use std::{
@@ -58,16 +60,13 @@ impl TSFile {
         let mut results = Vec::new();
         let mut found_opening = false;
         let mut found_ternary = false;
-        let mut n_opening_parentheses = 0; // TODO: this is a tmp hack, should count n occurrences of '(' after opening tag, not entire line
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
                 if line.contains(opening_tag) {
                     found_opening = true;
-                    n_opening_parentheses = 0;
                 }
 
                 if found_opening {
-                    n_opening_parentheses += line.matches('(').count();
                     if let Ok((_, key)) = extract_id(&line, id_tag) {
                         results.push(KeyUsage {
                             key,
@@ -99,13 +98,6 @@ impl TSFile {
                         // TODO: think about edge cases where this might not be true!
                         found_ternary = false;
                         found_opening = false;
-                    } else if line.contains(')') {
-                        n_opening_parentheses -= line.matches(')').count();
-                        if n_opening_parentheses == 0 {
-                            found_ternary = false;
-                            found_opening = false;
-                            n_opening_parentheses = 0;
-                        }
                     }
                 }
             }
@@ -141,14 +133,38 @@ impl TSFile {
     }
 }
 
+// fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
+//     let (input, _) = take_until(id_tag)(input)?;
+//     let (input, _) = tag(id_tag)(input)?;
+
+//     let (input, _) = take_until("\"")(input)?;
+//     let (input, id) = fenced("\"", "\"")(input)?;
+
+//     Ok((input, id.to_string()))
+// }
+
 fn extract_id<'a>(input: &'a str, id_tag: &'a str) -> IResult<&'a str, String> {
     let (input, _) = take_until(id_tag)(input)?;
     let (input, _) = tag(id_tag)(input)?;
 
-    let (input, _) = take_until("\"")(input)?;
-    let (input, id) = fenced("\"", "\"")(input)?;
+    let (input, _) = take_until_any_quote(input)?;
+    let (input, id) = extract_enclosed_id(input)?;
 
     Ok((input, id.to_string()))
+}
+
+// Parser that skips to the next occurrence of any quote character
+fn take_until_any_quote(input: &str) -> IResult<&str, &str> {
+    alt((take_until("\""), take_until("'"), take_until("`")))(input)
+}
+
+// Parser that extracts a string enclosed in either "", '', or ``
+fn extract_enclosed_id(input: &str) -> IResult<&str, &str> {
+    alt((
+        delimited(tag("\""), take_until("\""), tag("\"")),
+        delimited(tag("'"), take_until("'"), tag("'")),
+        delimited(tag("`"), take_until("`"), tag("`")),
+    ))(input)
 }
 
 fn extract_quoted_string(input: &str) -> IResult<&str, String> {
