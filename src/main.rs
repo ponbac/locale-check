@@ -35,7 +35,7 @@ struct Args {
 
 static EXTENSIONS_TO_SEARCH: [&str; 2] = ["ts", "tsx"];
 
-// clear; cargo run -- --sort --root-dir C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\ --en-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\en.json --sv-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\sv.json --ignore-file C:\Users\pbac\Dev\ramirent\SE-CustomerPortal\CustomerPortal\shared\translations\.keyignore
+// clear; cargo run -- --sort --root-dir C:\Users\pbac\dev\SE-CustomerPortal\CustomerPortal\ --en-file C:\Users\pbac\dev\SE-CustomerPortal\CustomerPortal\shared\translations\en.json --sv-file C:\Users\pbac\dev\SE-CustomerPortal\CustomerPortal\shared\translations\sv.json --ignore-file C:\Users\pbac\dev\SE-CustomerPortal\CustomerPortal\shared\translations\.keyignore
 #[tokio::main]
 async fn main() {
     let args = Args::parse();

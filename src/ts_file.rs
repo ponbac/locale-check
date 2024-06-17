@@ -58,13 +58,16 @@ impl TSFile {
         let mut results = Vec::new();
         let mut found_opening = false;
         let mut found_ternary = false;
+        let mut n_opening_parentheses = 0; // TODO: this is a tmp hack, should count n occurrences of '(' after opening tag, not entire line
         for (line_number, line_result) in BufReader::new(&self.file).lines().enumerate() {
             if let Ok(line) = line_result {
                 if line.contains(opening_tag) {
                     found_opening = true;
+                    n_opening_parentheses = 0;
                 }
 
                 if found_opening {
+                    n_opening_parentheses += line.matches('(').count();
                     if let Ok((_, key)) = extract_id(&line, id_tag) {
                         results.push(KeyUsage {
                             key,
@@ -96,6 +99,13 @@ impl TSFile {
                         // TODO: think about edge cases where this might not be true!
                         found_ternary = false;
                         found_opening = false;
+                    } else if line.contains(')') {
+                        n_opening_parentheses -= line.matches(')').count();
+                        if n_opening_parentheses == 0 {
+                            found_ternary = false;
+                            found_opening = false;
+                            n_opening_parentheses = 0;
+                        }
                     }
                 }
             }
@@ -103,6 +113,9 @@ impl TSFile {
 
         self.file.seek(std::io::SeekFrom::Start(0)).unwrap();
         results
+            .into_iter()
+            .filter(|usage| !usage.key.is_empty())
+            .collect()
     }
 
     fn find_usages_multiple_tags(&mut self, tags: [&str; 5]) -> Vec<KeyUsage> {
@@ -187,6 +200,28 @@ mod tests {
         // for usage in &actual {
         //     println!("{:?}", usage.key);
         // }
+    }
+
+    #[test]
+    fn test_simon_case() {
+        let path = Path::new("test_files/simon-case.tsx");
+        let mut ts_file = TSFile::new(path);
+
+        let actual = ts_file.find_format_message_usages();
+        let expected = vec![
+            KeyUsage {
+                key: "common.product_category".to_string(),
+                line: 5,
+                file_path: "test_files/simon-case.tsx".into(),
+            },
+            KeyUsage {
+                key: "common.project_description".to_string(),
+                line: 11,
+                file_path: "test_files/simon-case.tsx".into(),
+            },
+        ];
+
+        assert_eq!(expected, actual);
     }
 
     #[test]
